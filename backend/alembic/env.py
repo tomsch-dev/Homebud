@@ -1,7 +1,15 @@
 import os
 from logging.config import fileConfig
+from pathlib import Path
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+# Load .env so DATABASE_URL is available when running alembic directly
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+except ImportError:
+    pass
 
 # Import all models so Alembic can detect them
 from app.database import Base

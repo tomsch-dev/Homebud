@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     logto_app_id: str = ""
     logto_app_secret: str = ""
 
-    api_ninjas_key: str = ""
     openai_api_key: str = ""
 
     frontend_url: str = "http://localhost:3000"

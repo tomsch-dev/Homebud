@@ -12,17 +12,15 @@ router = APIRouter(prefix="/nutrition", tags=["nutrition"])
 
 
 @router.post("/fetch/{food_item_id}", response_model=NutritionOut)
-async def fetch_and_save_nutrition(food_item_id: uuid.UUID, db: Session = Depends(get_db)):
+def fetch_and_save_nutrition(food_item_id: uuid.UUID, db: Session = Depends(get_db)):
     item = db.get(FoodItem, food_item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
 
     try:
-        data = await fetch_nutrition(item.name, item.quantity, item.unit)
+        data = fetch_nutrition(item.name)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=502, detail="Failed to reach nutrition API")
 
     nutrition = db.query(Nutrition).filter(Nutrition.food_item_id == food_item_id).first()
     if nutrition:

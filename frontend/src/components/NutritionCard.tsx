@@ -8,14 +8,8 @@ export default function NutritionCard({ nutrition }: Props) {
   const rows = [
     { label: 'Calories', value: `${nutrition.calories.toFixed(1)} kcal` },
     { label: 'Protein', value: `${nutrition.protein_g.toFixed(1)} g` },
-    { label: 'Total Fat', value: `${nutrition.fat_total_g.toFixed(1)} g` },
-    { label: 'Saturated Fat', value: `${nutrition.fat_saturated_g.toFixed(1)} g` },
+    { label: 'Fat', value: `${nutrition.fat_total_g.toFixed(1)} g` },
     { label: 'Carbohydrates', value: `${nutrition.carbohydrates_total_g.toFixed(1)} g` },
-    { label: 'Fiber', value: `${nutrition.fiber_g.toFixed(1)} g` },
-    { label: 'Sugar', value: `${nutrition.sugar_g.toFixed(1)} g` },
-    { label: 'Sodium', value: `${nutrition.sodium_mg.toFixed(0)} mg` },
-    { label: 'Potassium', value: `${nutrition.potassium_mg.toFixed(0)} mg` },
-    { label: 'Cholesterol', value: `${nutrition.cholesterol_mg.toFixed(0)} mg` },
   ];
 
   return (

@@ -1,10 +1,21 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import engine, Base
+import app.models  # noqa: F401 — ensures all models are registered
 from app.routers import food_items, nutrition, recipes, ai, grocery, eating_out, spending, users
 
-app = FastAPI(title="Kitchen Helper API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Auto-create all tables on startup (dev-friendly; in prod use alembic migrations)
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(title="Kitchen Helper API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
