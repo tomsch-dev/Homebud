@@ -1,0 +1,33 @@
+version: '3.8'
+
+# Local development override — hot-reload for backend, Vite dev server for frontend
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kitchen_user}:${POSTGRES_PASSWORD:-kitchen_pass}@postgres:5432/${POSTGRES_DB:-kitchen_helper}
+
+  # In dev, run the frontend with Vite's dev server outside Docker for best HMR experience.
+  # Or keep this service to run it in Docker with a bind mount.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:8000
