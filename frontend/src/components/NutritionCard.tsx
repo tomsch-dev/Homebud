@@ -5,29 +5,29 @@ interface Props {
 }
 
 export default function NutritionCard({ nutrition }: Props) {
-  const rows = [
-    { label: 'Calories', value: `${nutrition.calories.toFixed(1)} kcal` },
-    { label: 'Protein', value: `${nutrition.protein_g.toFixed(1)} g` },
-    { label: 'Fat', value: `${nutrition.fat_total_g.toFixed(1)} g` },
-    { label: 'Carbohydrates', value: `${nutrition.carbohydrates_total_g.toFixed(1)} g` },
+  const macros = [
+    { label: 'Calories', value: nutrition.calories, unit: 'kcal', color: 'text-gray-900' },
+    { label: 'Protein', value: nutrition.protein_g, unit: 'g', color: 'text-blue-600' },
+    { label: 'Carbs', value: nutrition.carbohydrates_total_g, unit: 'g', color: 'text-amber-600' },
+    { label: 'Fat', value: nutrition.fat_total_g, unit: 'g', color: 'text-red-500' },
   ];
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <h4 className="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">
-        Nutrition Facts <span className="text-gray-400 font-normal normal-case">(per {nutrition.serving_size_g}g)</span>
-      </h4>
-      <div className="space-y-1">
-        {rows.map((row) => (
-          <div key={row.label} className="flex justify-between text-sm">
-            <span className="text-gray-600">{row.label}</span>
-            <span className="font-medium text-gray-800">{row.value}</span>
+    <div className="bg-gray-50 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          Nutrition Facts
+        </h4>
+        <span className="text-[11px] text-gray-400">per {nutrition.serving_size_g}g</span>
+      </div>
+      <div className="grid grid-cols-4 gap-3">
+        {macros.map(({ label, value, unit, color }) => (
+          <div key={label} className="text-center">
+            <p className={`text-lg font-bold ${color}`}>{value.toFixed(0)}</p>
+            <p className="text-[11px] text-gray-400">{unit} {label.toLowerCase()}</p>
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-400 mt-3">
-        Last updated: {new Date(nutrition.fetched_at).toLocaleDateString()}
-      </p>
     </div>
   );
 }

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     logto_app_secret: str = ""
 
     openai_api_key: str = ""
+    usda_api_key: str = "DEMO_KEY"
 
     frontend_url: str = "http://localhost:3000"
     default_currency: str = "EUR"

@@ -6,22 +6,12 @@ from app.config import settings
 from app.database import engine, Base
 import app.models  # noqa: F401 — ensures all models are registered
 from app.routers import food_items, nutrition, recipes, ai, grocery, eating_out, spending, users, food_data
-from app.services.food_data_loader import load_food_data
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Auto-create all tables on startup (dev-friendly; in prod use alembic migrations)
     Base.metadata.create_all(bind=engine)
-    # Seed food data from CSV on first run
-    from app.database import SessionLocal
-    db = SessionLocal()
-    try:
-        count = load_food_data(db)
-        if count:
-            print(f"Loaded {count} food items from CSV")
-    finally:
-        db.close()
     yield
 
 

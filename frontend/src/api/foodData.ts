@@ -2,7 +2,6 @@ import client from './client';
 
 export interface FoodDataItem {
   api_food_id: string;
-  canonical_food_id?: string;
   display_name: string;
   canonical_name: string;
   description?: string;
@@ -18,11 +17,9 @@ export interface FoodDataItem {
   sodium_mg?: number;
   cholesterol_mg?: number;
   quality_score?: number;
-  variant_flavor?: string;
-  variant_prep?: string;
-  variant_protein?: string;
-  canonical_food_name?: string;
-  taxonomy_category?: string;
+  source?: string;
+  fdc_id?: number;
+  is_new?: boolean;
 }
 
 export interface RecipeNutrition {

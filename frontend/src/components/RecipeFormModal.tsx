@@ -70,13 +70,15 @@ function IngredientNameInput({
             <li
               key={fd.api_food_id}
               onClick={() => {
-                const bestName = fd.canonical_food_name || fd.display_name || fd.canonical_name;
-                onChange(bestName);
+                onChange(fd.display_name);
                 setShowSuggestions(false);
               }}
               className="px-2 py-1.5 hover:bg-primary-50 cursor-pointer text-xs border-b border-gray-50 last:border-0"
             >
-              <span className="font-medium text-gray-800">{fd.canonical_food_name || fd.display_name}</span>
+              <span className="font-medium text-gray-800">{fd.display_name}</span>
+              {fd.source === 'usda' && (
+                <span className="text-blue-500 font-medium ml-1">USDA</span>
+              )}
               {fd.calories_kcal != null && (
                 <span className="text-gray-400 ml-1">{fd.calories_kcal} kcal/100g</span>
               )}

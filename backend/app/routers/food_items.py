@@ -1,6 +1,7 @@
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -48,6 +49,26 @@ def get_food_item(item_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=FoodItemOut, status_code=status.HTTP_201_CREATED)
 def create_food_item(data: FoodItemCreate, db: Session = Depends(get_db)):
+    # Check for existing item with the same name and unit — merge by adding quantity
+    existing = (
+        db.query(FoodItem)
+        .filter(
+            func.lower(FoodItem.name) == data.name.lower(),
+            FoodItem.unit == data.unit,
+        )
+        .first()
+    )
+    if existing:
+        existing.quantity += data.quantity
+        # Update expiry to the latest date if provided
+        if data.expiry_date and (not existing.expiry_date or data.expiry_date > existing.expiry_date):
+            existing.expiry_date = data.expiry_date
+        if data.food_data_id and not existing.nutrition:
+            _sync_nutrition_from_food_data(db, existing.id, data.food_data_id)
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     item_data = data.model_dump(exclude={"food_data_id"})
     item = FoodItem(**item_data)
     db.add(item)
