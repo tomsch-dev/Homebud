@@ -55,7 +55,7 @@ export default function Navbar() {
                 </svg>
               </div>
               <span className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">
-                KitchenBud
+                HomeBud
               </span>
             </Link>
 

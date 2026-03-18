@@ -72,7 +72,7 @@ export default function Landing() {
                 <circle cx="16" cy="9.5" r="1.5" fill="white" opacity="0.9"/>
               </svg>
             </div>
-            <span className="text-lg font-bold text-gray-900 dark:text-white">KitchenBud</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">HomeBud</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -213,7 +213,7 @@ export default function Landing() {
                 <circle cx="16" cy="9.5" r="1.5" fill="white" opacity="0.9"/>
               </svg>
             </div>
-            KitchenBud
+            HomeBud
           </div>
           <span>&copy; {new Date().getFullYear()}</span>
         </div>
