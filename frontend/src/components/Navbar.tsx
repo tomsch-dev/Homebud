@@ -45,11 +45,13 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.5 0 3-.3 4.3-.9" />
-                  <path d="M12 8c4-1 7 2 8 5s-1 6-4 7" />
-                  <path d="M12 8c-2.5 3-2 7 0 9s5 2 8 0" />
-                  <path d="M12 8V2" />
+                <svg className="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                  <path d="M10 22C10 22 11 25 16 25C21 25 22 22 22 22L21 20H11Z" fill="white" opacity="0.95"/>
+                  <rect x="9" y="19" width="14" height="2.5" rx="1.25" fill="white"/>
+                  <line x1="16" y1="19" x2="16" y2="12" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M16 14C14 12 10 11.5 9 13C8 14.5 10 16.5 16 14" fill="white" opacity="0.9"/>
+                  <path d="M16 11.5C18 9.5 22 9 23 10.5C24 12 22 14 16 11.5" fill="white" opacity="0.9"/>
+                  <circle cx="16" cy="9.5" r="1.5" fill="white" opacity="0.9"/>
                 </svg>
               </div>
               <span className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">
