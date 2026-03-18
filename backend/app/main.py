@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Kitchen Helper API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Kitchen Helper API", version="1.0.0", lifespan=lifespan, redirect_slashes=False)
 
 app.add_middleware(
     CORSMiddleware,

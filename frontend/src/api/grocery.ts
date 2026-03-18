@@ -43,9 +43,9 @@ export interface CreateGroceryTrip {
 }
 
 export const groceryApi = {
-  getAll: () => client.get<GroceryTrip[]>('/api/grocery-trips').then((r) => r.data),
+  getAll: () => client.get<GroceryTrip[]>('/api/grocery-trips/').then((r) => r.data),
   getOne: (id: string) => client.get<GroceryTrip>(`/api/grocery-trips/${id}`).then((r) => r.data),
-  create: (data: CreateGroceryTrip) => client.post<GroceryTrip>('/api/grocery-trips', data).then((r) => r.data),
+  create: (data: CreateGroceryTrip) => client.post<GroceryTrip>('/api/grocery-trips/', data).then((r) => r.data),
   update: (id: string, data: Partial<CreateGroceryTrip>) =>
     client.patch<GroceryTrip>(`/api/grocery-trips/${id}`, data).then((r) => r.data),
   delete: (id: string) => client.delete(`/api/grocery-trips/${id}`),

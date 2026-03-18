@@ -52,9 +52,9 @@ export interface RecipeSuggestion {
 }
 
 export const recipesApi = {
-  getAll: () => client.get<Recipe[]>('/api/recipes').then((r) => r.data),
+  getAll: () => client.get<Recipe[]>('/api/recipes/').then((r) => r.data),
   getOne: (id: string) => client.get<Recipe>(`/api/recipes/${id}`).then((r) => r.data),
-  create: (data: CreateRecipe) => client.post<Recipe>('/api/recipes', data).then((r) => r.data),
+  create: (data: CreateRecipe) => client.post<Recipe>('/api/recipes/', data).then((r) => r.data),
   update: (id: string, data: Partial<CreateRecipe>) =>
     client.patch<Recipe>(`/api/recipes/${id}`, data).then((r) => r.data),
   delete: (id: string) => client.delete(`/api/recipes/${id}`),

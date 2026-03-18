@@ -42,8 +42,8 @@ export interface SpendingSummary {
 }
 
 export const eatingOutApi = {
-  getAll: () => client.get<EatingOutExpense[]>('/api/eating-out').then((r) => r.data),
-  create: (data: CreateEatingOut) => client.post<EatingOutExpense>('/api/eating-out', data).then((r) => r.data),
+  getAll: () => client.get<EatingOutExpense[]>('/api/eating-out/').then((r) => r.data),
+  create: (data: CreateEatingOut) => client.post<EatingOutExpense>('/api/eating-out/', data).then((r) => r.data),
   update: (id: string, data: Partial<CreateEatingOut>) =>
     client.patch<EatingOutExpense>(`/api/eating-out/${id}`, data).then((r) => r.data),
   delete: (id: string) => client.delete(`/api/eating-out/${id}`),

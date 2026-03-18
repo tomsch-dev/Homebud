@@ -34,9 +34,9 @@ export type CreateFoodItem = Omit<FoodItem, 'id' | 'created_at' | 'updated_at' |
 };
 
 export const foodItemsApi = {
-  getAll: () => client.get<FoodItem[]>('/api/food-items').then((r) => r.data),
+  getAll: () => client.get<FoodItem[]>('/api/food-items/').then((r) => r.data),
   getOne: (id: string) => client.get<FoodItem>(`/api/food-items/${id}`).then((r) => r.data),
-  create: (data: CreateFoodItem) => client.post<FoodItem>('/api/food-items', data).then((r) => r.data),
+  create: (data: CreateFoodItem) => client.post<FoodItem>('/api/food-items/', data).then((r) => r.data),
   update: (id: string, data: Partial<CreateFoodItem>) =>
     client.patch<FoodItem>(`/api/food-items/${id}`, data).then((r) => r.data),
   delete: (id: string) => client.delete(`/api/food-items/${id}`),
