@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useLogto } from '@logto/react';
 import client from '../api/client';
+import { isTokenReady } from '../components/AuthSync';
 
 interface UserData {
   id: string;
@@ -35,26 +36,35 @@ export function useUserLoader(): UserContextValue {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      // Dev mode (no auth) — still fetch user info
+    let cancelled = false;
+
+    const fetchUser = () => {
       client
         .get('/api/users/me')
-        .then((res) => setUser(res.data))
-        .catch(() => setUser(null))
-        .finally(() => setLoading(false));
-      return;
-    }
+        .then((res) => { if (!cancelled) setUser(res.data); })
+        .catch(() => { if (!cancelled) setUser(null); })
+        .finally(() => { if (!cancelled) setLoading(false); });
+    };
 
-    // Small delay to let AuthSync set the token first
-    const timer = setTimeout(() => {
-      client
-        .get('/api/users/me')
-        .then((res) => setUser(res.data))
-        .catch(() => setUser(null))
-        .finally(() => setLoading(false));
-    }, 100);
+    // Wait for AuthSync to set the token before calling the API
+    const waitAndFetch = () => {
+      if (isTokenReady()) {
+        fetchUser();
+      } else {
+        const interval = setInterval(() => {
+          if (isTokenReady()) {
+            clearInterval(interval);
+            if (!cancelled) fetchUser();
+          }
+        }, 20);
+        // Safety timeout
+        setTimeout(() => { clearInterval(interval); if (!cancelled && loading) fetchUser(); }, 3000);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    waitAndFetch();
+
+    return () => { cancelled = true; };
   }, [isAuthenticated]);
 
   const isPremium = user?.roles?.includes('premium') ?? false;

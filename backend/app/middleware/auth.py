@@ -10,18 +10,22 @@ from app.database import get_db
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-# Cached JWKS
+# Cached JWKS with TTL
 _jwks_cache: Optional[dict] = None
+_jwks_cache_time: float = 0
 
 
 async def _get_jwks() -> dict:
-    global _jwks_cache
-    if _jwks_cache:
+    global _jwks_cache, _jwks_cache_time
+    import time
+    now = time.time()
+    if _jwks_cache and (now - _jwks_cache_time) < 3600:  # Cache for 1 hour
         return _jwks_cache
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.get(f"{settings.logto_endpoint}/oidc/jwks")
         resp.raise_for_status()
         _jwks_cache = resp.json()
+        _jwks_cache_time = now
         return _jwks_cache
 
 
