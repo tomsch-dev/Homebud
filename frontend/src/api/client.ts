@@ -15,4 +15,13 @@ export function setAuthToken(token: string | null) {
   }
 }
 
+/** Set the opaque token for role sync via userinfo endpoint */
+export function setOpaqueToken(token: string | null) {
+  if (token) {
+    client.defaults.headers.common['X-Opaque-Token'] = token;
+  } else {
+    delete client.defaults.headers.common['X-Opaque-Token'];
+  }
+}
+
 export default client;

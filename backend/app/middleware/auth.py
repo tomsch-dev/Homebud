@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
@@ -59,12 +59,23 @@ async def get_current_user_id(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}")
 
 
-def _sync_roles_from_token(token: str, user_id: str, db: Session) -> None:
-    """Sync roles from the JWT 'roles' claim into our DB."""
+async def _sync_roles_from_logto(token: str, user_id: str, db: Session) -> None:
+    """Sync roles by calling the Logto userinfo endpoint (works even without roles in JWT)."""
     try:
-        # Decode without verification just to read claims (already verified above)
-        payload = jwt.get_unverified_claims(token)
-        token_roles = payload.get("roles", [])
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{settings.logto_endpoint}/oidc/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            if resp.status_code != 200:
+                return
+            userinfo = resp.json()
+
+        token_roles = userinfo.get("roles", [])
+        if not token_roles:
+            # Also try the JWT claims as fallback
+            payload = jwt.get_unverified_claims(token)
+            token_roles = payload.get("roles", [])
         if not token_roles:
             return
 
@@ -79,7 +90,6 @@ def _sync_roles_from_token(token: str, user_id: str, db: Session) -> None:
         for role_name in token_roles:
             if role_name in existing_roles:
                 continue
-            # Get or create the role
             role = db.query(Role).filter(Role.name == role_name).first()
             if not role:
                 role = Role(name=role_name)
@@ -87,7 +97,7 @@ def _sync_roles_from_token(token: str, user_id: str, db: Session) -> None:
                 db.flush()
             db.add(UserRole(user_id=user_id, role_id=role.id))
 
-        # Remove roles no longer in token
+        # Remove roles no longer in Logto
         for ur in list(user.user_roles):
             if ur.role.name not in token_roles:
                 db.delete(ur)
@@ -98,13 +108,17 @@ def _sync_roles_from_token(token: str, user_id: str, db: Session) -> None:
 
 
 async def get_current_user_with_roles(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> str:
-    """Same as get_current_user_id but also syncs roles from the JWT."""
+    """Same as get_current_user_id but also syncs roles from Logto userinfo."""
     user_id = await get_current_user_id(credentials)
-    if settings.logto_endpoint and credentials:
-        _sync_roles_from_token(credentials.credentials, user_id, db)
+    if settings.logto_endpoint:
+        # Use the opaque token (sent via X-Opaque-Token header) for userinfo
+        opaque_token = request.headers.get("X-Opaque-Token")
+        if opaque_token:
+            await _sync_roles_from_logto(opaque_token, user_id, db)
     return user_id
 
 
