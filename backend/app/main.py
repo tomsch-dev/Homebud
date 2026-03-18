@@ -19,7 +19,7 @@ app = FastAPI(title="Kitchen Helper API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:3000"],
+    allow_origins=[settings.frontend_url, "http://localhost:3000", "https://homebud.net"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
