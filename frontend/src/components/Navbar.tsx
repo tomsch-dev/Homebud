@@ -19,7 +19,7 @@ const BOTTOM_NAV_PATHS = ['/dashboard', '/kitchen', '/grocery-trips', '/recipes'
 
 export default function Navbar() {
   const location = useLocation();
-  const { isAuthenticated, signIn, signOut } = useLogto();
+  const { signOut } = useLogto();
   const { theme, toggle } = useTheme();
   const { t, i18n } = useTranslation();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -45,12 +45,15 @@ export default function Navbar() {
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7V5a1 1 0 011-1h14a1 1 0 011 1v2M4 7l1 12a2 2 0 002 2h10a2 2 0 002-2l1-12" />
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.5 0 3-.3 4.3-.9" />
+                  <path d="M12 8c4-1 7 2 8 5s-1 6-4 7" />
+                  <path d="M12 8c-2.5 3-2 7 0 9s5 2 8 0" />
+                  <path d="M12 8V2" />
                 </svg>
               </div>
               <span className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">
-                {currentLang === 'de' ? 'Küchenhelfer' : 'Kitchen Helper'}
+                KitchenBud
               </span>
             </Link>
 
@@ -100,21 +103,12 @@ export default function Navbar() {
                 )}
               </button>
 
-              {isAuthenticated ? (
-                <button
-                  onClick={() => signOut(window.location.origin)}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:block"
-                >
-                  {t('nav.signOut')}
-                </button>
-              ) : (
-                <button
-                  onClick={() => signIn(`${window.location.origin}/callback`)}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                >
-                  {t('nav.signIn')}
-                </button>
-              )}
+              <button
+                onClick={() => signOut(window.location.origin)}
+                className="px-3 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors hidden sm:block"
+              >
+                {t('nav.signOut')}
+              </button>
             </div>
           </div>
         </div>
@@ -182,17 +176,15 @@ export default function Navbar() {
                       </Link>
                     );
                   })}
-                  {isAuthenticated && (
-                    <button
-                      onClick={() => { setMoreOpen(false); signOut(window.location.origin); }}
-                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 w-full border-t border-gray-100 dark:border-gray-700"
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                      </svg>
-                      {t('nav.signOut')}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { setMoreOpen(false); signOut(window.location.origin); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 w-full border-t border-gray-100 dark:border-gray-700"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    {t('nav.signOut')}
+                  </button>
                 </div>
               </>
             )}

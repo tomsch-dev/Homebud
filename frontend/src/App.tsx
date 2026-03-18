@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ThemeProvider from './components/ThemeProvider';
 import ToastProvider from './components/Toast';
 import Layout from './components/Layout';
+import RequireAuth from './components/RequireAuth';
 import { UserContext, useUserLoader } from './hooks/useUser';
 import Dashboard from './pages/Dashboard';
 import Kitchen from './pages/Kitchen';
@@ -23,7 +24,7 @@ export default function App() {
           <BrowserRouter>
           <Routes>
             <Route path="/callback" element={<Callback />} />
-            <Route element={<Layout />}>
+            <Route element={<RequireAuth><Layout /></RequireAuth>}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/kitchen" element={<Kitchen />} />
