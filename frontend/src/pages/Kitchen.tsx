@@ -46,12 +46,13 @@ export default function Kitchen() {
 
   const [reduceId, setReduceId] = useState<string | null>(null);
   const [reduceAmount, setReduceAmount] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<FoodItem | null>(null);
 
-  const handleDelete = async (id: string) => {
-    const confirmed = await toast.confirm(t('kitchen.deleteConfirm'));
-    if (!confirmed) return;
-    await foodItemsApi.delete(id);
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await foodItemsApi.delete(deleteTarget.id);
+    setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+    setDeleteTarget(null);
     toast.success(t('kitchen.deleted'));
   };
 
@@ -119,13 +120,13 @@ export default function Kitchen() {
             placeholder={t('kitchen.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 focus:border-transparent transition-colors"
+            className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 focus:border-transparent transition-colors min-h-[44px]"
           />
         </div>
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 transition-colors flex-shrink-0"
+          className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 transition-colors flex-shrink-0 min-h-[44px]"
         >
           <option value="">{t('kitchen.allCategories')}</option>
           {categories.map((c) => (
@@ -246,7 +247,7 @@ export default function Kitchen() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setDeleteTarget(item)}
                         className="p-2.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                         title={t('common.delete')}
                       >
@@ -324,6 +325,44 @@ export default function Kitchen() {
           onSave={handleSave}
           onClose={() => setShowModal(false)}
         />
+      )}
+
+      {/* Delete confirmation popup */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeleteTarget(null)}>
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-sm p-6 space-y-4 animate-[popIn_0.2s_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="w-14 h-14 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('kitchen.deleteConfirm')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{deleteTarget.name}</span> — {deleteTarget.quantity} {t(`units.${deleteTarget.unit}`, deleteTarget.unit)}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors min-h-[48px]"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-3 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors min-h-[48px]"
+              >
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

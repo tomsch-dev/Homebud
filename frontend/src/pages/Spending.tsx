@@ -29,15 +29,30 @@ const normalizeUnit = (u: string): string => {
 };
 
 type Tab = 'overview' | 'grocery' | 'eating-out';
+type Period = 'this-month' | 'last-month' | '3-months' | 'year' | 'custom';
 
-function getDefaultDates() {
+function getDatesForPeriod(period: Period): { start: string; end: string } {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
-  };
+  let s: Date, e: Date;
+  switch (period) {
+    case 'last-month':
+      s = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      e = new Date(now.getFullYear(), now.getMonth(), 0);
+      break;
+    case '3-months':
+      s = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      break;
+    case 'year':
+      s = new Date(now.getFullYear(), 0, 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      break;
+    default: // this-month
+      s = new Date(now.getFullYear(), now.getMonth(), 1);
+      e = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      break;
+  }
+  return { start: s.toISOString().split('T')[0], end: e.toISOString().split('T')[0] };
 }
 
 export default function Spending() {
@@ -47,7 +62,8 @@ export default function Spending() {
   const [tab, setTab] = useState<Tab>('overview');
 
   // --- Overview state ---
-  const defaults = getDefaultDates();
+  const defaults = getDatesForPeriod('this-month');
+  const [period, setPeriod] = useState<Period>('this-month');
   const [start, setStart] = useState(defaults.start);
   const [end, setEnd] = useState(defaults.end);
   const [currency, setCurrency] = useState('EUR');
@@ -105,6 +121,16 @@ export default function Spending() {
     eatingOutApi.getAll().then(setExpenses).finally(() => setEatingLoading(false));
   };
 
+  const selectPeriod = (p: Period) => {
+    setPeriod(p);
+    if (p !== 'custom') {
+      const dates = getDatesForPeriod(p);
+      setStart(dates.start);
+      setEnd(dates.end);
+    }
+  };
+
+  // Auto-load when period/dates change
   useEffect(() => { loadOverview(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { loadGrocery(); }, []);
   useEffect(() => { loadEating(); }, []);
@@ -234,18 +260,25 @@ export default function Spending() {
 
   // --- Shared ---
   const pct = summary && summary.total > 0 ? Math.round((summary.grocery_total / summary.total) * 100) : 0;
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700';
-  const inputClsSm = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700';
+  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 min-h-[44px]';
+  const inputClsSm = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-2 text-sm sm:text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 min-h-[40px]';
 
   const tabCls = (active: boolean) =>
-    `px-4 py-2.5 text-sm font-medium rounded-lg transition-colors min-h-[40px] ${
+    `flex-1 py-2.5 text-xs sm:text-sm font-medium rounded-lg transition-colors min-h-[44px] flex items-center justify-center gap-1.5 ${
       active
         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
     }`;
 
+  const periodCls = (p: Period) =>
+    `flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-colors min-h-[40px] ${
+      period === p
+        ? 'bg-emerald-600 text-white shadow-sm'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+    }`;
+
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('spending.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('spending.subtitle')}</p>
@@ -254,55 +287,73 @@ export default function Spending() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-1">
         <button onClick={() => setTab('overview')} className={tabCls(tab === 'overview')}>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            {t('spending.overview')}
-          </span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span className="hidden sm:inline">{t('spending.overview')}</span>
+          <span className="sm:hidden">{t('spending.overview')}</span>
         </button>
         <button onClick={() => setTab('grocery')} className={tabCls(tab === 'grocery')}>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-            </svg>
-            {t('spending.groceries')}
-          </span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+          <span className="hidden sm:inline">{t('spending.groceries')}</span>
+          <span className="sm:hidden">{t('spending.groceries')}</span>
         </button>
         <button onClick={() => setTab('eating-out')} className={tabCls(tab === 'eating-out')}>
-          <span className="flex items-center gap-1.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-            </svg>
-            {t('spending.eatingOut')}
-          </span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+          </svg>
+          <span className="hidden sm:inline">{t('spending.eatingOut')}</span>
+          <span className="sm:hidden">{t('spending.eatingOut')}</span>
         </button>
       </div>
 
       {/* ========== OVERVIEW TAB ========== */}
       {tab === 'overview' && (
         <>
-          {/* Filters */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:gap-3 sm:items-end">
-            <div className="grid grid-cols-2 gap-2 sm:contents">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.from')}</label>
-                <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className={inputCls} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.to')}</label>
-                <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={inputCls} />
-              </div>
+          {/* Period presets */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-2 sm:p-3 space-y-2">
+            <div className="flex gap-1">
+              <button onClick={() => selectPeriod('this-month')} className={periodCls('this-month')}>
+                {t('spending.thisMonth')}
+              </button>
+              <button onClick={() => selectPeriod('last-month')} className={periodCls('last-month')}>
+                {t('spending.lastMonth')}
+              </button>
+              <button onClick={() => selectPeriod('3-months')} className={periodCls('3-months')}>
+                {t('spending.threeMonths')}
+              </button>
+              <button onClick={() => selectPeriod('year')} className={periodCls('year')}>
+                {t('spending.thisYear')}
+              </button>
+              <button onClick={() => selectPeriod('custom')} className={periodCls('custom')}>
+                {t('spending.custom')}
+              </button>
             </div>
-            <div className="flex gap-2 sm:contents">
-              <div className="flex-1 sm:flex-initial">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.currency')}</label>
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}>
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+
+            {/* Custom date range — only shown when custom is selected */}
+            {period === 'custom' && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.from')}</label>
+                  <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.to')}</label>
+                  <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={inputCls} />
+                </div>
               </div>
+            )}
+
+            {/* Currency + Load */}
+            <div className="flex gap-2">
+              <select value={currency} onChange={(e) => setCurrency(e.target.value)}
+                className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]">
+                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
               <button onClick={loadOverview} disabled={overviewLoading}
-                className="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm font-medium self-end min-h-[42px]">
+                className="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm font-medium min-h-[44px]">
                 {overviewLoading ? t('common.loading') : t('spending.load')}
               </button>
             </div>
@@ -311,22 +362,23 @@ export default function Spending() {
           {overviewError && <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">{overviewError}</div>}
 
           {summary && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{summary.total.toFixed(2)}</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">{summary.currency}</p>
+            <div className="space-y-4 sm:space-y-6">
+              {/* Summary cards — horizontal scroll on mobile */}
+              <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{summary.total.toFixed(2)}</p>
+                  <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">{summary.currency}</p>
                 </div>
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-5">
-                  <p className="text-sm text-emerald-700 dark:text-emerald-400">{t('spending.groceries')}</p>
-                  <p className="text-3xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{summary.grocery_total.toFixed(2)}</p>
-                  <p className="text-sm text-emerald-600 dark:text-emerald-400">{pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-400">{t('spending.groceries')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{summary.grocery_total.toFixed(2)}</p>
+                  <p className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">{pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
                 </div>
-                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-5">
-                  <p className="text-sm text-orange-700 dark:text-orange-400">{t('spending.eatingOut')}</p>
-                  <p className="text-3xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">{100 - pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
+                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs sm:text-sm text-orange-700 dark:text-orange-400">{t('spending.eatingOut')}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
+                  <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400">{100 - pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
                 </div>
               </div>
 
