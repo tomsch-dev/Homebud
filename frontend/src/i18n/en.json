@@ -172,7 +172,9 @@
     "scanFailed": "Failed to scan receipt. Please try again or log manually.",
     "addToKitchenConfirm": "Add these items to your kitchen?",
     "addToKitchen": "Add",
-    "addedToKitchen": "Items added to kitchen"
+    "addedToKitchen": "Items added to kitchen",
+    "scanHeroTitle": "Scan Your Receipt",
+    "scanHeroDesc": "Snap a photo of your grocery receipt and we'll extract all items automatically — no manual entry needed."
   },
   "eatingOut": {
     "title": "Eating Out",
@@ -307,7 +309,8 @@
     "redirecting": "Redirecting...",
     "goToProfile": "Go to Profile",
     "nameRequired": "Please set your name to continue",
-    "nameRequiredHint": "We need your name so household members can identify you."
+    "nameRequiredHint": "We need your name so household members can identify you.",
+    "preferredCurrency": "Preferred Currency"
   },
   "categories": {
     "dairy": "Dairy",

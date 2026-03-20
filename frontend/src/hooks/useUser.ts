@@ -10,6 +10,7 @@ interface UserData {
   avatar: string | null;
   roles: string[];
   household_id: string | null;
+  preferred_currency: string;
 }
 
 interface UserContextValue {

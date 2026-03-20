@@ -33,6 +33,7 @@ async def get_me(
         created_at=user.created_at,
         roles=roles,
         household_id=str(hh_member.household_id) if hh_member else None,
+        preferred_currency=user.preferred_currency or "EUR",
     )
 
 
@@ -54,4 +55,5 @@ async def update_me(
     hh_member = db.query(HouseholdMember).filter(HouseholdMember.user_id == user_id).first()
     return UserOut(id=user.id, email=user.email, name=user.name, avatar=user.avatar,
                    created_at=user.created_at, roles=roles,
-                   household_id=str(hh_member.household_id) if hh_member else None)
+                   household_id=str(hh_member.household_id) if hh_member else None,
+                   preferred_currency=user.preferred_currency or "EUR")

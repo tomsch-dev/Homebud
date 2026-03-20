@@ -8,7 +8,6 @@ import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'pieces', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
 const MEAL_ICONS: Record<string, string> = {
   breakfast: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z',
@@ -58,7 +57,8 @@ function getDatesForPeriod(period: Period): { start: string; end: string } {
 export default function Spending() {
   const { t, i18n } = useTranslation();
   const toast = useToast();
-  const { isPremium } = useUser();
+  const { user, isPremium } = useUser();
+  const userCurrency = user?.preferred_currency || 'EUR';
   const [tab, setTab] = useState<Tab>('overview');
 
   // --- Overview state ---
@@ -66,7 +66,6 @@ export default function Spending() {
   const [period, setPeriod] = useState<Period>('this-month');
   const [start, setStart] = useState(defaults.start);
   const [end, setEnd] = useState(defaults.end);
-  const [currency, setCurrency] = useState('EUR');
   const [summary, setSummary] = useState<SpendingSummary | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(false);
   const [overviewError, setOverviewError] = useState('');
@@ -77,9 +76,9 @@ export default function Spending() {
   const [groceryLoading, setGroceryLoading] = useState(true);
   const [showGroceryForm, setShowGroceryForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [groceryForm, setGroceryForm] = useState({ store_name: '', trip_date: '', notes: '', currency: 'EUR' });
+  const [groceryForm, setGroceryForm] = useState({ store_name: '', trip_date: '', notes: '', currency: userCurrency });
   const [groceryItems, setGroceryItems] = useState<CreateGroceryTripItem[]>([
-    { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: 'EUR' },
+    { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency },
   ]);
   const [grocerySaving, setGrocerySaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,7 +93,7 @@ export default function Spending() {
   const [eatingSaving, setEatingSaving] = useState(false);
   const [eatingForm, setEatingForm] = useState<CreateEatingOut>({
     restaurant_name: '', expense_date: new Date().toISOString().split('T')[0],
-    amount: 0, currency: 'EUR', meal_type: 'lunch', notes: '',
+    amount: 0, currency: userCurrency, meal_type: 'lunch', notes: '',
   });
 
   // --- Loaders ---
@@ -102,14 +101,14 @@ export default function Spending() {
     setOverviewLoading(true);
     setOverviewError('');
     try {
-      const data = await spendingApi.getSummary(start, end, currency);
+      const data = await spendingApi.getSummary(start, end, userCurrency);
       setSummary(data);
     } catch {
       setOverviewError(t('spending.failedToLoad'));
     } finally {
       setOverviewLoading(false);
     }
-  }, [start, end, currency, t]);
+  }, [start, end, userCurrency, t]);
 
   const loadGrocery = () => {
     Promise.all([groceryApi.getAll(), foodItemsApi.getAll()])
@@ -130,14 +129,15 @@ export default function Spending() {
     }
   };
 
-  // Auto-load when period/dates change
+  // Auto-load when period/dates/currency change
+  useEffect(() => { if (period !== 'custom') loadOverview(); }, [period, userCurrency]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { loadOverview(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { loadGrocery(); }, []);
   useEffect(() => { loadEating(); }, []);
 
   // --- Grocery handlers ---
   const addGroceryItem = () =>
-    setGroceryItems([...groceryItems, { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: groceryForm.currency }]);
+    setGroceryItems([...groceryItems, { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency }]);
 
   const removeGroceryItem = (i: number) => setGroceryItems(groceryItems.filter((_, idx) => idx !== i));
 
@@ -168,8 +168,8 @@ export default function Spending() {
         toast.success(t('grocery.addedToKitchen'));
       }
       setShowGroceryForm(false);
-      setGroceryForm({ store_name: '', trip_date: '', notes: '', currency: 'EUR' });
-      setGroceryItems([{ name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: 'EUR' }]);
+      setGroceryForm({ store_name: '', trip_date: '', notes: '', currency: userCurrency });
+      setGroceryItems([{ name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency }]);
       dismissScan();
       loadGrocery();
       loadOverview();
@@ -231,7 +231,7 @@ export default function Spending() {
     try {
       await eatingOutApi.create(eatingForm);
       setShowEatingForm(false);
-      setEatingForm({ restaurant_name: '', expense_date: new Date().toISOString().split('T')[0], amount: 0, currency: 'EUR', meal_type: 'lunch', notes: '' });
+      setEatingForm({ restaurant_name: '', expense_date: new Date().toISOString().split('T')[0], amount: 0, currency: userCurrency, meal_type: 'lunch', notes: '' });
       loadEating();
       loadOverview();
     } catch {
@@ -278,7 +278,7 @@ export default function Spending() {
     }`;
 
   return (
-    <div className="space-y-3 sm:space-y-6">
+    <div className="space-y-3 sm:space-y-6 overflow-x-hidden">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('spending.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('spending.subtitle')}</p>
@@ -314,7 +314,7 @@ export default function Spending() {
         <>
           {/* Period presets */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-2 sm:p-3 space-y-2">
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <button onClick={() => selectPeriod('this-month')} className={periodCls('this-month')}>
                 {t('spending.thisMonth')}
               </button>
@@ -334,29 +334,25 @@ export default function Spending() {
 
             {/* Custom date range — only shown when custom is selected */}
             {period === 'custom' && (
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div>
+              <div className="grid grid-cols-2 gap-2 pt-1 overflow-hidden">
+                <div className="min-w-0">
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.from')}</label>
-                  <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className={inputCls} />
+                  <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className={`${inputCls} max-w-full`} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('spending.to')}</label>
-                  <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={inputCls} />
+                  <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className={`${inputCls} max-w-full`} />
                 </div>
               </div>
             )}
 
-            {/* Currency + Load */}
-            <div className="flex gap-2">
-              <select value={currency} onChange={(e) => setCurrency(e.target.value)}
-                className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]">
-                {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+            {/* Load button for custom period */}
+            {period === 'custom' && (
               <button onClick={loadOverview} disabled={overviewLoading}
-                className="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm font-medium min-h-[44px]">
+                className="w-full py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors text-sm font-medium min-h-[44px]">
                 {overviewLoading ? t('common.loading') : t('spending.load')}
               </button>
-            </div>
+            )}
           </div>
 
           {overviewError && <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">{overviewError}</div>}
@@ -439,7 +435,7 @@ export default function Spending() {
                       {summary.top_stores.map((s) => (
                         <li key={s.store} className="flex justify-between text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{s.store}</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{s.total.toFixed(2)} {currency}</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{s.total.toFixed(2)} {userCurrency}</span>
                         </li>
                       ))}
                     </ul>
@@ -452,7 +448,7 @@ export default function Spending() {
                       {summary.top_restaurants.map((r) => (
                         <li key={r.restaurant} className="flex justify-between text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{r.restaurant}</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{r.total.toFixed(2)} {currency}</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{r.total.toFixed(2)} {userCurrency}</span>
                         </li>
                       ))}
                     </ul>
@@ -467,31 +463,73 @@ export default function Spending() {
       {/* ========== GROCERY TAB ========== */}
       {tab === 'grocery' && (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('grocery.subtitle')}</p>
-            <div className="flex gap-2">
-              {isPremium && (
-                <>
-                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
-                  <button onClick={() => fileInputRef.current?.click()} disabled={scanning}
-                    className="p-2.5 sm:px-4 sm:py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-colors text-sm font-medium flex items-center gap-2 min-h-[44px]">
-                    {scanning ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} capture="environment" />
+
+          {/* Receipt Scan Hero CTA */}
+          {!showGroceryForm && (
+            isPremium ? (
+              <div className="bg-gradient-to-br from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+                <div className="relative flex items-start gap-4">
+                  <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold">{t('grocery.scanHeroTitle')}</h3>
+                    <p className="text-sm text-purple-100 mt-1">{t('grocery.scanHeroDesc')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={scanning}
+                  className="mt-4 w-full py-3.5 bg-white text-purple-700 font-semibold rounded-xl hover:bg-purple-50 disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2 min-h-[48px] shadow-lg shadow-purple-900/20"
+                >
+                  {scanning ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                      {t('grocery.scanning')}
+                    </>
+                  ) : (
+                    <>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                    )}
-                    <span className="hidden sm:inline">{scanning ? t('grocery.scanning') : t('grocery.scanReceipt')}</span>
-                  </button>
-                </>
-              )}
-              <button onClick={() => { setShowGroceryForm(!showGroceryForm); dismissScan(); }}
-                className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
-                {showGroceryForm ? t('common.cancel') : t('grocery.logTrip')}
-              </button>
-            </div>
+                      {t('grocery.scanReceipt')}
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+                <div className="absolute top-2 right-3 px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-full uppercase tracking-wide">{t('premium.locked')}</div>
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0 pr-16">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('grocery.scanHeroTitle')}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('grocery.scanHeroDesc')}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('premium.testPhase')}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('grocery.subtitle')}</p>
+            <button onClick={() => { setShowGroceryForm(!showGroceryForm); dismissScan(); }}
+              className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
+              {showGroceryForm ? t('common.cancel') : t('grocery.logTrip')}
+            </button>
           </div>
 
           {/* Scan preview */}
@@ -525,19 +563,11 @@ export default function Spending() {
                       className={inputCls} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('spending.currency')}</label>
-                    <select value={groceryForm.currency} onChange={(e) => setGroceryForm({ ...groceryForm, currency: e.target.value })} className={inputCls}>
-                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>
-                    <input type="text" value={groceryForm.notes}
-                      onChange={(e) => setGroceryForm({ ...groceryForm, notes: e.target.value })}
-                      className={inputCls} />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>
+                  <input type="text" value={groceryForm.notes}
+                    onChange={(e) => setGroceryForm({ ...groceryForm, notes: e.target.value })}
+                    className={inputCls} />
                 </div>
 
                 {/* Items */}
@@ -790,7 +820,7 @@ export default function Spending() {
 
           <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
             <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">{t('eatingOut.thisMonth')}</p>
-            <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{totalEatingThisMonth.toFixed(2)} EUR</p>
+            <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{totalEatingThisMonth.toFixed(2)} {userCurrency}</p>
           </div>
 
           {showEatingForm && (
@@ -811,18 +841,12 @@ export default function Spending() {
                       className={inputCls} />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({userCurrency}) *</label>
                     <input type="number" required min="0" step="0.01" value={eatingForm.amount}
                       onChange={(e) => setEatingForm({ ...eatingForm, amount: parseFloat(e.target.value) })}
                       className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.currency')}</label>
-                    <select value={eatingForm.currency} onChange={(e) => setEatingForm({ ...eatingForm, currency: e.target.value })} className={inputCls}>
-                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.mealType')}</label>

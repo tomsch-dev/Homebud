@@ -172,7 +172,9 @@
     "scanFailed": "Kassenbon konnte nicht gescannt werden. Bitte erneut versuchen oder manuell erfassen.",
     "addToKitchenConfirm": "Artikel zur Küche hinzufügen?",
     "addToKitchen": "Hinzufügen",
-    "addedToKitchen": "Artikel zur Küche hinzugefügt"
+    "addedToKitchen": "Artikel zur Küche hinzugefügt",
+    "scanHeroTitle": "Kassenbon scannen",
+    "scanHeroDesc": "Fotografiere deinen Kassenbon und alle Artikel werden automatisch erfasst — kein manuelles Eintippen nötig."
   },
   "eatingOut": {
     "title": "Restaurantbesuche",
@@ -307,7 +309,8 @@
     "redirecting": "Weiterleitung...",
     "goToProfile": "Zum Profil",
     "nameRequired": "Bitte gib deinen Namen an, um fortzufahren",
-    "nameRequiredHint": "Wir benötigen deinen Namen, damit Haushaltsmitglieder dich erkennen können."
+    "nameRequiredHint": "Wir benötigen deinen Namen, damit Haushaltsmitglieder dich erkennen können.",
+    "preferredCurrency": "Bevorzugte Währung"
   },
   "categories": {
     "dairy": "Milchprodukte",

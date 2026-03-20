@@ -18,6 +18,7 @@ class UserOut(BaseModel):
     created_at: datetime
     roles: List[str] = []
     household_id: Optional[str] = None
+    preferred_currency: str = "EUR"
     model_config = {"from_attributes": True}
 
 
@@ -25,3 +26,4 @@ class UserUpsert(BaseModel):
     email: Optional[str] = None
     name: Optional[str] = None
     avatar: Optional[str] = None
+    preferred_currency: Optional[str] = None

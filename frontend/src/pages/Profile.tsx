@@ -18,7 +18,9 @@ export default function Profile() {
   const { signOut } = useLogto();
   const toast = useToast();
 
+  const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
   const [name, setName] = useState(user?.name || '');
+  const [currency, setCurrency] = useState(user?.preferred_currency || 'EUR');
   const [saving, setSaving] = useState(false);
   const [household, setHousehold] = useState<HouseholdData | null>(null);
   const [householdLoading, setHouseholdLoading] = useState(true);
@@ -28,6 +30,7 @@ export default function Profile() {
   const [showJoin, setShowJoin] = useState(false);
 
   useEffect(() => { if (user?.name) setName(user.name); }, [user?.name]);
+  useEffect(() => { if (user?.preferred_currency) setCurrency(user.preferred_currency); }, [user?.preferred_currency]);
 
   useEffect(() => {
     client.get('/api/households/my')
@@ -36,10 +39,10 @@ export default function Profile() {
       .finally(() => setHouseholdLoading(false));
   }, []);
 
-  const saveName = async () => {
+  const saveProfile = async () => {
     setSaving(true);
     try {
-      await client.patch('/api/users/me', { name });
+      await client.patch('/api/users/me', { name, preferred_currency: currency });
       toast.success(t('profile.saved'));
       window.location.reload();
     } catch { toast.error(t('profile.saveFailed')); }
@@ -102,8 +105,14 @@ export default function Profile() {
           <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{t('profile.name')} *</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder={t('profile.namePlaceholder')} />
         </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{t('profile.preferredCurrency')}</label>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
+            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
         <button
-          onClick={saveName}
+          onClick={saveProfile}
           disabled={saving || !name.trim()}
           className="px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl transition-colors"
         >
