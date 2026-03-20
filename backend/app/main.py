@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
 import app.models  # noqa: F401 — ensures all models are registered
-from app.routers import food_items, nutrition, recipes, grocery, eating_out, spending, users, receipt_scan, ai
+from app.routers import food_items, nutrition, recipes, grocery, eating_out, spending, users, receipt_scan, ai, admin
 
 
 @asynccontextmanager
@@ -34,6 +34,7 @@ app.include_router(eating_out.router, prefix="/api")
 app.include_router(spending.router, prefix="/api")
 app.include_router(receipt_scan.router, prefix="/api")
 app.include_router(ai.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 
 
 @app.get("/health")

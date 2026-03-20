@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useLogto } from '@logto/react';
 import { useTheme } from './ThemeProvider';
 import { useTranslation } from 'react-i18next';
+import { useUser } from '../hooks/useUser';
 
 const navItems = [
   { path: '/dashboard', i18nKey: 'nav.dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1' },
@@ -22,6 +23,7 @@ export default function Navbar() {
   const { signOut } = useLogto();
   const { theme, toggle } = useTheme();
   const { t, i18n } = useTranslation();
+  const { isAdmin } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const currentLang = i18n.language?.startsWith('de') ? 'de' : 'en';
@@ -77,6 +79,21 @@ export default function Navbar() {
                   {t(item.i18nKey)}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    isActive('/admin')
+                      ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  </svg>
+                  {t('nav.admin')}
+                </Link>
+              )}
             </div>
 
             {/* Right side controls */}
@@ -178,6 +195,22 @@ export default function Navbar() {
                       </Link>
                     );
                   })}
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
+                        isActive('/admin')
+                          ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                      </svg>
+                      {t('nav.admin')}
+                    </Link>
+                  )}
                   <button
                     onClick={() => { setMoreOpen(false); signOut(window.location.origin); }}
                     className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 w-full border-t border-gray-100 dark:border-gray-700"

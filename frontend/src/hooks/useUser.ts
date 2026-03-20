@@ -15,12 +15,14 @@ interface UserContextValue {
   user: UserData | null;
   loading: boolean;
   isPremium: boolean;
+  isAdmin: boolean;
 }
 
 const UserContext = createContext<UserContextValue>({
   user: null,
   loading: true,
   isPremium: false,
+  isAdmin: false,
 });
 
 export { UserContext };
@@ -80,6 +82,7 @@ export function useUserLoader(): UserContextValue {
   }, [isAuthenticated, logtoLoading]);
 
   const isPremium = user?.roles?.includes('premium') ?? false;
+  const isAdmin = user?.roles?.includes('admin') ?? false;
 
-  return { user, loading, isPremium };
+  return { user, loading, isPremium, isAdmin };
 }

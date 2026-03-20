@@ -33,7 +33,7 @@ async def _get_jwks() -> dict:
         return _jwks_cache
 
 
-async def _get_m2m_token() -> Optional[str]:
+async def get_m2m_token() -> Optional[str]:
     """Get a Management API access token using M2M app credentials."""
     global _m2m_token, _m2m_token_expiry
     now = time.time()
@@ -43,13 +43,14 @@ async def _get_m2m_token() -> Optional[str]:
     if not settings.logto_m2m_app_id or not settings.logto_m2m_app_secret:
         return None
 
+    resource = settings.logto_management_api_resource or "https://default.logto.app/api"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
                 f"{settings.logto_endpoint}/oidc/token",
                 data={
                     "grant_type": "client_credentials",
-                    "resource": "https://default.logto.app/api",
+                    "resource": resource,
                     "scope": "all",
                 },
                 auth=(settings.logto_m2m_app_id, settings.logto_m2m_app_secret),
@@ -93,71 +94,8 @@ async def get_current_user_id(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}")
 
 
-async def _sync_roles_from_management_api(user_id: str, db: Session) -> None:
-    """Sync roles by calling the Logto Management API with M2M credentials."""
-    try:
-        m2m_token = await _get_m2m_token()
-        if not m2m_token:
-            return
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{settings.logto_endpoint}/api/users/{user_id}/roles",
-                headers={"Authorization": f"Bearer {m2m_token}"},
-            )
-            if resp.status_code != 200:
-                return
-            logto_roles = resp.json()
-
-        token_roles = [r["name"] for r in logto_roles]
-
-        from app.models.user import User, Role, UserRole
-
-        user = db.get(User, user_id)
-        if not user:
-            return
-
-        existing_roles = {ur.role.name for ur in user.user_roles}
-
-        for role_name in token_roles:
-            if role_name in existing_roles:
-                continue
-            role = db.query(Role).filter(Role.name == role_name).first()
-            if not role:
-                role = Role(name=role_name)
-                db.add(role)
-                db.flush()
-            db.add(UserRole(user_id=user_id, role_id=role.id))
-
-        # Remove roles no longer in Logto
-        for ur in list(user.user_roles):
-            if ur.role.name not in token_roles:
-                db.delete(ur)
-
-        db.commit()
-    except Exception:
-        db.rollback()
-
-
-async def get_current_user_with_roles(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
-) -> str:
-    """Same as get_current_user_id but also syncs roles from Logto Management API."""
-    user_id = await get_current_user_id(credentials)
-    if settings.logto_endpoint:
-        await _sync_roles_from_management_api(user_id, db)
-    return user_id
-
-
-async def require_premium(
-    user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
-) -> str:
-    """
-    Validates that the current user has the 'premium' role.
-    In dev mode, always grants premium access.
-    """
+def _check_role(user_id: str, role_name: str, db: Session) -> str:
+    """Check that the user has the given role in the local DB."""
     if not settings.logto_endpoint:
         return user_id
 
@@ -168,9 +106,23 @@ async def require_premium(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found")
 
     roles = {ur.role.name for ur in user.user_roles}
-    if "premium" not in roles:
+    if role_name not in roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Premium subscription required",
+            detail=f"{role_name.title()} access required",
         )
     return user_id
+
+
+async def require_premium(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> str:
+    return _check_role(user_id, "premium", db)
+
+
+async def require_admin(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> str:
+    return _check_role(user_id, "admin", db)

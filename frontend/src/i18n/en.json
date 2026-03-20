@@ -9,7 +9,8 @@
     "spending": "Spending",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "more": "More"
+    "more": "More",
+    "admin": "Admin"
   },
   "common": {
     "cancel": "Cancel",
@@ -256,6 +257,20 @@
     "ctaTitle": "Ready to get cooking?",
     "ctaDescription": "Join HomeBud today and take control of your kitchen. It only takes a minute to get started.",
     "ctaButton": "Create Your Free Account"
+  },
+  "admin": {
+    "title": "Admin Console",
+    "subtitle": "Manage users, roles, and access",
+    "totalUsers": "Total Users",
+    "premiumUsers": "Premium",
+    "suspendedUsers": "Suspended",
+    "allUsers": "All Users",
+    "noUsers": "No users yet",
+    "grantPremium": "Grant Premium",
+    "revokePremium": "Revoke Premium",
+    "suspend": "Suspend",
+    "unsuspend": "Unsuspend",
+    "suspended": "SUSPENDED"
   },
   "categories": {
     "dairy": "Dairy",

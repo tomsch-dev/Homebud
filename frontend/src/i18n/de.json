@@ -9,7 +9,8 @@
     "spending": "Ausgaben",
     "signIn": "Anmelden",
     "signOut": "Abmelden",
-    "more": "Mehr"
+    "more": "Mehr",
+    "admin": "Admin"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -256,6 +257,20 @@
     "ctaTitle": "Bereit zum Kochen?",
     "ctaDescription": "Starte noch heute mit HomeBud und bringe Ordnung in deine Küche. Es dauert nur eine Minute.",
     "ctaButton": "Kostenloses Konto erstellen"
+  },
+  "admin": {
+    "title": "Admin-Konsole",
+    "subtitle": "Benutzer, Rollen und Zugriff verwalten",
+    "totalUsers": "Benutzer gesamt",
+    "premiumUsers": "Premium",
+    "suspendedUsers": "Gesperrt",
+    "allUsers": "Alle Benutzer",
+    "noUsers": "Noch keine Benutzer",
+    "grantPremium": "Premium geben",
+    "revokePremium": "Premium entziehen",
+    "suspend": "Sperren",
+    "unsuspend": "Entsperren",
+    "suspended": "GESPERRT"
   },
   "categories": {
     "dairy": "Milchprodukte",

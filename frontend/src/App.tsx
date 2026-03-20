@@ -12,6 +12,7 @@ import GroceryTrips from './pages/GroceryTrips';
 import EatingOut from './pages/EatingOut';
 import Spending from './pages/Spending';
 import AIRecommendations from './pages/AIRecommendations';
+import AdminConsole from './pages/AdminConsole';
 import Callback from './pages/Callback';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/grocery-trips" element={<GroceryTrips />} />
               <Route path="/eating-out" element={<EatingOut />} />
               <Route path="/spending" element={<Spending />} />
+              <Route path="/admin" element={<AdminConsole />} />
             </Route>
           </Routes>
         </BrowserRouter>

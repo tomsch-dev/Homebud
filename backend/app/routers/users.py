@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.middleware.auth import get_current_user_id, get_current_user_with_roles
+from app.middleware.auth import get_current_user_id
 from app.models.user import User, UserRole, Role
 from app.schemas.user import UserOut, UserUpsert
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me", response_model=UserOut)
 async def get_me(
-    user_id: str = Depends(get_current_user_with_roles),
+    user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
     user = db.get(User, user_id)
