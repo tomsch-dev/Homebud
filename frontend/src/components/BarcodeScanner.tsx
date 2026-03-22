@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { lookupBarcode, OpenFoodFactsProduct } from '../api/openFoodFacts';
 
 interface Props {
@@ -22,13 +22,26 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     if (!el) return;
     stoppedRef.current = false;
 
-    const scanner = new Html5Qrcode(el.id);
+    const barcodeFormats = [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+    ];
+    const scanner = new Html5Qrcode(el.id, { formatsToSupport: barcodeFormats, verbose: false });
     scannerRef.current = scanner;
+
+    const qrboxFn = (vw: number, vh: number) => ({
+      width: Math.min(vw * 0.85, 350),
+      height: Math.min(vh * 0.4, 180),
+    });
 
     scanner
       .start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
+        { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;
           stoppedRef.current = true;
@@ -43,18 +56,30 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
 
     return () => {
       stoppedRef.current = true;
-      scanner.stop().catch(() => {});
+      try {
+        const state = scanner.getState();
+        if (state === 2 /* SCANNING */ || state === 3 /* PAUSED */) {
+          scanner.stop().catch(() => {});
+        }
+      } catch {
+        // scanner was never started or already cleared
+      }
     };
   }, []);
 
   const handleBarcode = async (code: string) => {
     setScannedCode(code);
     setStatus('loading');
-    const product = await lookupBarcode(code);
-    if (product && product.name) {
-      onResult(product);
-    } else {
-      setStatus('not-found');
+    try {
+      const product = await lookupBarcode(code);
+      if (stoppedRef.current) return; // component unmounted
+      if (product && product.name) {
+        onResult(product);
+      } else {
+        setStatus('not-found');
+      }
+    } catch {
+      if (!stoppedRef.current) setStatus('not-found');
     }
   };
 
@@ -70,10 +95,14 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     stoppedRef.current = false;
     const el = containerRef.current;
     if (!el || !scannerRef.current) return;
+    const qrboxFn = (vw: number, vh: number) => ({
+      width: Math.min(vw * 0.85, 350),
+      height: Math.min(vh * 0.4, 180),
+    });
     scannerRef.current
       .start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
+        { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;
           stoppedRef.current = true;
