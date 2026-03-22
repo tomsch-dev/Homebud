@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { eatingOutApi, EatingOutExpense, CreateEatingOut } from '../api/spending';
-import { useToast } from '../components/Toast';
-import { fmtCurrency, fmtDate } from '../utils/currency';
+import { eatingOutApi, EatingOutExpense, CreateEatingOut } from '../../api/spending';
+import { useToast } from '../../components/Toast';
+import { fmtCurrency, currencySymbol, fmtDate } from '../../utils/currency';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
 const MEAL_ICONS: Record<string, string> = {
   breakfast: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z',
   lunch: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
@@ -15,27 +14,35 @@ const MEAL_ICONS: Record<string, string> = {
   other: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
 };
 
-export default function EatingOut() {
+interface Props {
+  userCurrency: string;
+  inputCls: string;
+}
+
+export default function EatingOutTab({ userCurrency, inputCls }: Props) {
+  const { t, i18n } = useTranslation();
+  const toast = useToast();
+
   const [expenses, setExpenses] = useState<EatingOutExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const toast = useToast();
-  const { t, i18n } = useTranslation();
   const [form, setForm] = useState<CreateEatingOut>({
-    restaurant_name: '',
-    expense_date: new Date().toISOString().split('T')[0],
-    amount: 0,
-    currency: 'EUR',
-    meal_type: 'lunch',
-    notes: '',
+    restaurant_name: '', expense_date: new Date().toISOString().split('T')[0],
+    amount: 0, currency: userCurrency, meal_type: 'lunch', notes: '',
   });
 
-  const load = () => {
+  useEffect(() => {
     eatingOutApi.getAll().then(setExpenses).finally(() => setLoading(false));
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const totalThisMonth = expenses
+    .filter((e) => {
+      const d = new Date(e.expense_date);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, e) => sum + e.amount, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +50,8 @@ export default function EatingOut() {
     try {
       await eatingOutApi.create(form);
       setShowForm(false);
-      setForm({ restaurant_name: '', expense_date: new Date().toISOString().split('T')[0], amount: 0, currency: 'EUR', meal_type: 'lunch', notes: '' });
-      load();
+      setForm({ restaurant_name: '', expense_date: new Date().toISOString().split('T')[0], amount: 0, currency: userCurrency, meal_type: 'lunch', notes: '' });
+      eatingOutApi.getAll().then(setExpenses);
     } catch {
       toast.error(t('eatingOut.failedToSave'));
     } finally {
@@ -60,34 +67,19 @@ export default function EatingOut() {
     toast.success(t('eatingOut.deleted'));
   };
 
-  const totalThisMonth = expenses
-    .filter((e) => {
-      const d = new Date(e.expense_date);
-      const now = new Date();
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    })
-    .reduce((sum, e) => sum + e.amount, 0);
-
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700';
-
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <>
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('eatingOut.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('eatingOut.subtitle')}</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]"
-        >
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('eatingOut.subtitle')}</p>
+        <button onClick={() => setShowForm(!showForm)}
+          className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
           {showForm ? t('common.cancel') : t('eatingOut.addExpense')}
         </button>
       </div>
 
       <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
         <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">{t('eatingOut.thisMonth')}</p>
-        <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{fmtCurrency(totalThisMonth, 'EUR')}</p>
+        <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{fmtCurrency(totalThisMonth, userCurrency)}</p>
       </div>
 
       {showForm && (
@@ -108,23 +100,17 @@ export default function EatingOut() {
                   className={inputCls} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({currencySymbol(userCurrency)}) *</label>
                 <input type="number" required min="0" step="0.01" value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) })}
                   className={inputCls} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.currency')}</label>
-                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className={inputCls}>
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.mealType')}</label>
                 <select value={form.meal_type} onChange={(e) => setForm({ ...form, meal_type: e.target.value })} className={inputCls}>
-                  {MEAL_TYPES.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  {MEAL_TYPES.map((mt) => <option key={mt} value={mt}>{mt.charAt(0).toUpperCase() + mt.slice(1)}</option>)}
                 </select>
               </div>
             </div>
@@ -186,6 +172,6 @@ export default function EatingOut() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

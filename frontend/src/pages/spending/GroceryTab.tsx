@@ -1,16 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { groceryApi, GroceryTrip, CreateGroceryTrip, CreateGroceryTripItem } from '../api/grocery';
-import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
-import { receiptScanApi, ReceiptScanResult } from '../api/receiptScan';
-import { useToast } from '../components/Toast';
-import { useUser } from '../hooks/useUser';
-import { fmtCurrency, fmtDate } from '../utils/currency';
+import { groceryApi, GroceryTrip, CreateGroceryTrip, CreateGroceryTripItem } from '../../api/grocery';
+import { foodItemsApi, FoodItem, CreateFoodItem } from '../../api/foodItems';
+import { receiptScanApi, ReceiptScanResult } from '../../api/receiptScan';
+import { useToast } from '../../components/Toast';
+import { useUser } from '../../hooks/useUser';
+import { fmtCurrency, fmtDate } from '../../utils/currency';
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'pieces', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
 
-// Map translated/LLM unit names back to internal keys
 const UNIT_ALIASES: Record<string, string> = {
   'stück': 'pieces', 'stueck': 'pieces', 'stk': 'pieces', 'pcs': 'pieces',
   'el': 'tbsp', 'tl': 'tsp', 'tasse': 'cup',
@@ -20,23 +18,27 @@ const normalizeUnit = (u: string): string => {
   return UNIT_ALIASES[lower] || (UNITS.includes(lower) ? lower : UNITS.includes(u) ? u : 'pieces');
 };
 
-export default function GroceryTrips() {
+interface Props {
+  userCurrency: string;
+  inputCls: string;
+  inputClsSm: string;
+}
+
+export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props) {
+  const { t, i18n } = useTranslation();
+  const toast = useToast();
+  const { isPremium } = useUser();
+
   const [trips, setTrips] = useState<GroceryTrip[]>([]);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const toast = useToast();
-  const { t, i18n } = useTranslation();
-  const { isPremium } = useUser();
-
-  const [form, setForm] = useState({ store_name: '', trip_date: '', notes: '', currency: 'EUR' });
+  const [form, setForm] = useState({ store_name: '', trip_date: '', notes: '', currency: userCurrency });
   const [items, setItems] = useState<CreateGroceryTripItem[]>([
-    { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: 'EUR' },
+    { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency },
   ]);
   const [saving, setSaving] = useState(false);
-
-  // Receipt scanning state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
   const [scanPreview, setScanPreview] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function GroceryTrips() {
   useEffect(() => { load(); }, []);
 
   const addItem = () =>
-    setItems([...items, { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: form.currency }]);
+    setItems([...items, { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency }]);
 
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
 
@@ -62,6 +64,8 @@ export default function GroceryTrips() {
       : it
     ));
   };
+
+  const dismissScan = () => { setScanResult(null); setScanPreview(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,20 +78,16 @@ export default function GroceryTrips() {
         for (const item of items) {
           try {
             await foodItemsApi.create({
-              name: item.name,
-              quantity: item.quantity,
-              unit: item.unit,
-              category: undefined,
-              price_per_unit: item.price_per_unit,
-              price_currency: form.currency,
+              name: item.name, quantity: item.quantity, unit: item.unit,
+              category: item.category || undefined, price_per_unit: item.price_per_unit, price_currency: form.currency,
             } as CreateFoodItem);
-          } catch { /* skip duplicates or errors */ }
+          } catch { /* skip */ }
         }
         toast.success(t('grocery.addedToKitchen'));
       }
       setShowForm(false);
-      setForm({ store_name: '', trip_date: '', notes: '', currency: 'EUR' });
-      setItems([{ name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: 'EUR' }]);
+      setForm({ store_name: '', trip_date: '', notes: '', currency: userCurrency });
+      setItems([{ name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency }]);
       dismissScan();
       load();
     } catch {
@@ -113,19 +113,15 @@ export default function GroceryTrips() {
       const result = await receiptScanApi.scan(file, form.currency, i18n.language);
       setScanResult(result);
       setForm((prev) => ({
-        ...prev,
-        store_name: result.store_name || prev.store_name,
-        trip_date: result.trip_date || prev.trip_date,
-        currency: result.currency || prev.currency,
+        ...prev, store_name: result.store_name || prev.store_name,
+        trip_date: result.trip_date || prev.trip_date, currency: result.currency || prev.currency,
       }));
       setItems(
         result.items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          unit: normalizeUnit(item.unit),
-          price_per_unit: item.price_per_unit,
-          discount: Math.abs(item.discount || 0),
+          name: item.name, quantity: item.quantity, unit: normalizeUnit(item.unit),
+          price_per_unit: item.price_per_unit, discount: Math.abs(item.discount || 0),
           currency: result.currency || form.currency,
+          category: item.category || undefined,
         }))
       );
       setShowForm(true);
@@ -143,80 +139,94 @@ export default function GroceryTrips() {
     e.target.value = '';
   };
 
-  const dismissScan = () => {
-    setScanResult(null);
-    setScanPreview(null);
-  };
-
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700';
-  const inputClsSm = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1.5 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700';
-
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('grocery.title')}</h1>
-          <div className="flex gap-2">
-            {isPremium && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={scanning}
-                  className="p-2.5 sm:px-4 sm:py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-colors text-sm font-medium flex items-center gap-2 min-h-[44px]"
-                >
-                  {scanning ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                  <span className="hidden sm:inline">{scanning ? t('grocery.scanning') : t('grocery.scanReceipt')}</span>
-                </button>
-              </>
-            )}
+    <>
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} capture="environment" />
+
+      {/* Receipt Scan Hero CTA */}
+      {!showForm && (
+        isPremium ? (
+          <div className="bg-gradient-to-br from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800 rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+            <div className="relative flex items-start gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold">{t('grocery.scanHeroTitle')}</h3>
+                <p className="text-sm text-purple-100 mt-1">{t('grocery.scanHeroDesc')}</p>
+              </div>
+            </div>
             <button
-              onClick={() => { setShowForm(!showForm); dismissScan(); }}
-              className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+              className="mt-4 w-full py-3.5 bg-white text-purple-700 font-semibold rounded-xl hover:bg-purple-50 disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2 min-h-[48px] shadow-lg shadow-purple-900/20"
             >
-              {showForm ? t('common.cancel') : t('grocery.logTrip')}
+              {scanning ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                  {t('grocery.scanning')}
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {t('grocery.scanReceipt')}
+                </>
+              )}
             </button>
           </div>
-        </div>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">{t('grocery.subtitle')}</p>
+        ) : (
+          <div className="bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+            <div className="absolute top-2 right-3 px-2 py-0.5 bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-bold rounded-full uppercase tracking-wide">{t('premium.locked')}</div>
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0 pr-16">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('grocery.scanHeroTitle')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('grocery.scanHeroDesc')}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('premium.testPhase')}</p>
+              </div>
+            </div>
+          </div>
+        )
+      )}
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500 dark:text-gray-400">{t('grocery.subtitle')}</p>
+        <button onClick={() => { setShowForm(!showForm); dismissScan(); }}
+          className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
+          {showForm ? t('common.cancel') : t('grocery.logTrip')}
+        </button>
       </div>
 
       {/* Scan preview */}
       {scanResult && showForm && (
         <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-          {scanPreview && (
-            <img src={scanPreview} alt="Receipt" className="w-12 h-16 sm:w-16 sm:h-20 object-cover rounded-lg border border-purple-200 dark:border-purple-500/30 flex-shrink-0" />
-          )}
+          {scanPreview && <img src={scanPreview} alt="Receipt" className="w-12 h-16 sm:w-16 sm:h-20 object-cover rounded-lg border border-purple-200 dark:border-purple-500/30 flex-shrink-0" />}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-purple-800 dark:text-purple-300 text-sm">{t('grocery.scanComplete')}</h3>
-            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-              {t('grocery.scanItemsFound', { count: scanResult.items.length })}
-            </p>
+            <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">{t('grocery.scanItemsFound', { count: scanResult.items.length })}</p>
           </div>
           <button onClick={dismissScan} className="text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 text-lg p-1">&times;</button>
         </div>
       )}
 
-      {/* Form */}
+      {/* Grocery form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('grocery.newTrip')}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Trip metadata */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.store')} *</label>
@@ -231,20 +241,11 @@ export default function GroceryTrips() {
                   className={inputCls} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('spending.currency')}</label>
-                <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
-                  className={inputCls}>
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>
-                <input type="text" value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className={inputCls} />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>
+              <input type="text" value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                className={inputCls} />
             </div>
 
             {/* Items */}
@@ -254,7 +255,7 @@ export default function GroceryTrips() {
                 <button type="button" onClick={addItem} className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium py-1">{t('grocery.addItem')}</button>
               </div>
 
-              {/* Desktop: table layout */}
+              {/* Desktop table */}
               <div className="hidden sm:block space-y-2">
                 <div className="grid grid-cols-12 gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium px-1">
                   <div className="col-span-2">{t('grocery.fromKitchen')}</div>
@@ -313,19 +314,17 @@ export default function GroceryTrips() {
                 ))}
               </div>
 
-              {/* Mobile: card layout */}
+              {/* Mobile cards */}
               <div className="sm:hidden space-y-3">
                 {items.map((it, i) => (
                   <div key={i} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 space-y-2 relative">
                     {items.length > 1 && (
                       <button type="button" onClick={() => removeItem(i)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 dark:hover:text-red-400 text-lg p-1 leading-none">&times;</button>
                     )}
-                    <div>
-                      <select value={it.food_item_id || ''} onChange={(e) => handleFoodItemSelect(i, e.target.value)} className={inputCls}>
-                        <option value="">{t('grocery.fromKitchen')}...</option>
-                        {foodItems.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                      </select>
-                    </div>
+                    <select value={it.food_item_id || ''} onChange={(e) => handleFoodItemSelect(i, e.target.value)} className={inputCls}>
+                      <option value="">{t('grocery.fromKitchen')}...</option>
+                      {foodItems.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
                     <input type="text" required value={it.name} placeholder={t('grocery.name')}
                       onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
                       className={inputCls} />
@@ -430,7 +429,6 @@ export default function GroceryTrips() {
               </div>
               {expandedId === trip.id && (
                 <div className="border-t border-gray-100 dark:border-gray-800 px-3 sm:px-4 pb-3 sm:pb-4 pt-3">
-                  {/* Desktop: table */}
                   <table className="w-full text-sm hidden sm:table">
                     <thead>
                       <tr className="text-xs text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-gray-800">
@@ -459,7 +457,6 @@ export default function GroceryTrips() {
                       </tr>
                     </tfoot>
                   </table>
-                  {/* Mobile: compact list */}
                   <div className="sm:hidden space-y-1.5">
                     {trip.items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 dark:border-gray-800/50 last:border-0">
@@ -470,7 +467,7 @@ export default function GroceryTrips() {
                             {item.discount > 0 && <span className="text-red-500 ml-1">-{fmtCurrency(item.discount, item.currency)}</span>}
                           </p>
                         </div>
-                        <span className="font-medium text-sm text-gray-800 dark:text-gray-200 ml-3 flex-shrink-0">{fmtCurrency(item.total_price, item.currency)}</span>
+                        <span className="font-medium text-sm text-gray-800 dark:text-gray-200 ml-3 flex-shrink-0">{item.total_price.toFixed(2)}</span>
                       </div>
                     ))}
                     <div className="flex items-center justify-between pt-2">
@@ -485,6 +482,6 @@ export default function GroceryTrips() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

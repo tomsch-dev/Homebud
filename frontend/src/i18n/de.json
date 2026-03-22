@@ -59,7 +59,8 @@
     "reduceQuantity": "Menge reduzieren",
     "removeAmount": "Entnehmen",
     "reduce": "Entnehmen",
-    "quantityReduced": "Menge aktualisiert"
+    "quantityReduced": "Menge aktualisiert",
+    "expiryShort": "Abl."
   },
   "foodModal": {
     "addTitle": "Zur Küche hinzufügen",
@@ -249,7 +250,7 @@
     "mockItems": "Lebensmittel erfasst",
     "mockExpiring": "Bald ablaufend",
     "mockRecipes": "Rezepte",
-    "mockSaved": "Gespart",
+    "mockSaved": "Weniger Abfall",
     "featuresTitle": "Alles was du brauchst",
     "featuresSubtitle": "Von der Übersicht deines Kühlschranks bis zu smarten Rezeptvorschlägen — HomeBud hat alles.",
     "featureKitchen": "Kücheninventar",

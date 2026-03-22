@@ -166,7 +166,7 @@ export default function Landing() {
                   { label: t('landing.mockItems'), value: '24', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20' },
                   { label: t('landing.mockExpiring'), value: '3', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-500/20' },
                   { label: t('landing.mockRecipes'), value: '12', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-500/20' },
-                  { label: t('landing.mockSaved'), value: '€47', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-500/20' },
+                  { label: t('landing.mockSaved'), value: '47%', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-500/20' },
                 ].map((stat) => (
                   <div key={stat.label} className={`${stat.bg} rounded-xl p-3 sm:p-4 text-center`}>
                     <div className={`text-2xl sm:text-3xl font-bold ${stat.color}`}>{stat.value}</div>

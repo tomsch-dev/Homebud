@@ -59,7 +59,8 @@
     "reduceQuantity": "Remove some",
     "removeAmount": "Remove",
     "reduce": "Remove",
-    "quantityReduced": "Quantity updated"
+    "quantityReduced": "Quantity updated",
+    "expiryShort": "Exp."
   },
   "foodModal": {
     "addTitle": "Add to Kitchen",
@@ -249,7 +250,7 @@
     "mockItems": "Items Tracked",
     "mockExpiring": "Expiring Soon",
     "mockRecipes": "Recipes",
-    "mockSaved": "Saved",
+    "mockSaved": "Less Waste",
     "featuresTitle": "Everything you need",
     "featuresSubtitle": "From tracking what's in your fridge to smart recipe suggestions — HomeBud has you covered.",
     "featureKitchen": "Kitchen Inventory",

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
 import FoodItemModal from '../components/FoodItemModal';
 import { useToast } from '../components/Toast';
-import { fmtCurrency } from '../utils/currency';
+import { fmtCurrency, fmtDate } from '../utils/currency';
+import { SkeletonItem } from '../components/Skeleton';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   dairy: '🥛',
@@ -50,7 +51,7 @@ const CATEGORY_CHIP_ACTIVE: Record<string, string> = {
 const CATEGORY_ORDER = ['dairy', 'meat', 'seafood', 'vegetables', 'fruits', 'grains', 'beverages', 'condiments', 'snacks', 'frozen', 'other'];
 
 export default function Kitchen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [items, setItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -229,8 +230,8 @@ export default function Kitchen() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => <SkeletonItem key={i} />)}
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-20">
@@ -304,7 +305,7 @@ export default function Kitchen() {
                               )}
                               {item.expiry_date && (
                                 <span className={expired ? 'text-red-500' : expiring ? 'text-amber-500' : ''}>
-                                  Exp. {new Date(item.expiry_date).toLocaleDateString()}
+                                  {t('kitchen.expiryShort')} {fmtDate(item.expiry_date, i18n.language)}
                                 </span>
                               )}
                             </div>

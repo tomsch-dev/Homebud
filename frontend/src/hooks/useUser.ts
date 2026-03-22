@@ -1,7 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useLogto } from '@logto/react';
-import client from '../api/client';
-import { isTokenReady } from '../components/AuthSync';
+import client, { tokenReady } from '../api/client';
 
 interface UserData {
   id: string;
@@ -18,6 +17,7 @@ interface UserContextValue {
   loading: boolean;
   isPremium: boolean;
   isAdmin: boolean;
+  refresh: () => void;
 }
 
 const UserContext = createContext<UserContextValue>({
@@ -25,6 +25,7 @@ const UserContext = createContext<UserContextValue>({
   loading: true,
   isPremium: false,
   isAdmin: false,
+  refresh: () => {},
 });
 
 export { UserContext };
@@ -39,46 +40,29 @@ export function useUserLoader(): UserContextValue {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchUser = () => {
+    if (!client.defaults.headers.common['Authorization']) return;
+    client
+      .get('/api/users/me')
+      .then((res) => setUser(res.data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  };
 
-    // Don't fetch if Logto is still loading or user isn't authenticated
+  useEffect(() => {
     if (logtoLoading || !isAuthenticated) {
       setUser(null);
       setLoading(false);
       return;
     }
 
-    const fetchUser = () => {
-      // Only fetch if we actually have an auth header set
-      if (!client.defaults.headers.common['Authorization']) {
-        return;
-      }
-      client
-        .get('/api/users/me')
-        .then((res) => { if (!cancelled) setUser(res.data); })
-        .catch(() => { if (!cancelled) setUser(null); })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    };
-
-    // Wait for AuthSync to set the token before calling the API
-    const waitAndFetch = () => {
-      if (client.defaults.headers.common['Authorization']) {
-        fetchUser();
-      } else {
-        const interval = setInterval(() => {
-          if (client.defaults.headers.common['Authorization']) {
-            clearInterval(interval);
-            if (!cancelled) fetchUser();
-          }
-        }, 50);
-        // Safety timeout
-        setTimeout(() => { clearInterval(interval); if (!cancelled) setLoading(false); }, 5000);
-      }
-    };
-
+    let cancelled = false;
     setLoading(true);
-    waitAndFetch();
+
+    // Wait for AuthSync to set the token, then fetch user
+    tokenReady.then(() => {
+      if (!cancelled) fetchUser();
+    });
 
     return () => { cancelled = true; };
   }, [isAuthenticated, logtoLoading]);
@@ -86,5 +70,5 @@ export function useUserLoader(): UserContextValue {
   const isPremium = user?.roles?.includes('premium') ?? false;
   const isAdmin = user?.roles?.includes('admin') ?? false;
 
-  return { user, loading, isPremium, isAdmin };
+  return { user, loading, isPremium, isAdmin, refresh: fetchUser };
 }

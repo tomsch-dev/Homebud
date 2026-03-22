@@ -28,3 +28,11 @@ export function fmtCurrency(amount: number, code: string, decimals = 2): string 
   const val = amount.toFixed(decimals);
   return `${val}${sym}`;
 }
+
+/** Format a date string using the app's i18n locale */
+export function fmtDate(date: string | Date, lang: string, options?: Intl.DateTimeFormatOptions): string {
+  const locale = lang.startsWith('de') ? 'de-DE' : 'en-US';
+  return new Date(date).toLocaleDateString(locale, options);
+}
+
+export const SUPPORTED_CURRENCIES = Object.keys(CURRENCY_SYMBOLS);

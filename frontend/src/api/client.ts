@@ -13,6 +13,17 @@ export function setAuthToken(token: string | null) {
   } else {
     delete client.defaults.headers.common['Authorization'];
   }
+  // Resolve the token-ready promise
+  if (_tokenReadyResolve) {
+    _tokenReadyResolve();
+    _tokenReadyResolve = null;
+  }
 }
+
+// Promise that resolves when the first token is set (or cleared for unauth)
+let _tokenReadyResolve: (() => void) | null = null;
+export const tokenReady = new Promise<void>((resolve) => {
+  _tokenReadyResolve = resolve;
+});
 
 export default client;

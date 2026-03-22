@@ -7,6 +7,7 @@ import { spendingApi, SpendingSummary } from '../api/spending';
 import { subscriptionApi, Subscription } from '../api/subscriptions';
 import { useUser } from '../hooks/useUser';
 import { fmtCurrency } from '../utils/currency';
+import { DashboardSkeleton } from '../components/Skeleton';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -51,11 +52,7 @@ export default function Dashboard() {
   const firstName = user?.name?.split(' ')[0] || '';
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

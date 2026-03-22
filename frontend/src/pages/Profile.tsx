@@ -4,6 +4,7 @@ import { useLogto } from '@logto/react';
 import client from '../api/client';
 import { useUser } from '../hooks/useUser';
 import { useToast } from '../components/Toast';
+import { SUPPORTED_CURRENCIES, currencySymbol } from '../utils/currency';
 
 interface HouseholdData {
   id: string;
@@ -14,11 +15,11 @@ interface HouseholdData {
 
 export default function Profile() {
   const { t } = useTranslation();
-  const { user } = useUser();
+  const { user, refresh } = useUser();
   const { signOut } = useLogto();
   const toast = useToast();
 
-  const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
+  const CURRENCIES = SUPPORTED_CURRENCIES;
   const [name, setName] = useState(user?.name || '');
   const [currency, setCurrency] = useState(user?.preferred_currency || 'EUR');
   const [saving, setSaving] = useState(false);
@@ -44,7 +45,7 @@ export default function Profile() {
     try {
       await client.patch('/api/users/me', { name, preferred_currency: currency });
       toast.success(t('profile.saved'));
-      window.location.reload();
+      refresh();
     } catch { toast.error(t('profile.saveFailed')); }
     setSaving(false);
   };
@@ -108,7 +109,7 @@ export default function Profile() {
         <div>
           <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{t('profile.preferredCurrency')}</label>
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
-            {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CURRENCIES.map((c) => <option key={c} value={c}>{c} ({currencySymbol(c)})</option>)}
           </select>
         </div>
         <button
