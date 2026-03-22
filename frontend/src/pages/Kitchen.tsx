@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
 import FoodItemModal from '../components/FoodItemModal';
 import { useToast } from '../components/Toast';
+import { fmtCurrency } from '../utils/currency';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   dairy: '🥛',
@@ -298,7 +299,7 @@ export default function Kitchen() {
                               <span className="font-medium text-gray-700 dark:text-gray-300">{item.quantity} {t(`units.${item.unit}`, item.unit)}</span>
                               {item.price_per_unit != null && (
                                 <span className="text-emerald-600 dark:text-emerald-400">
-                                  {item.price_per_unit.toFixed(2)} {item.price_currency}/{t(`units.${item.unit}`, item.unit)}
+                                  {fmtCurrency(item.price_per_unit, item.price_currency || 'EUR')}/{t(`units.${item.unit}`, item.unit)}
                                 </span>
                               )}
                               {item.expiry_date && (

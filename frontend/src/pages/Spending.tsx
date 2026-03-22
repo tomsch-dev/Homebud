@@ -8,6 +8,7 @@ import { subscriptionApi, Subscription, CreateSubscription } from '../api/subscr
 import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { fmtCurrency, currencySymbol } from '../utils/currency';
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'pieces', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
@@ -443,22 +444,21 @@ export default function Spending() {
               <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 sm:overflow-visible snap-x snap-mandatory">
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{summary.total.toFixed(2)}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{summary.currency}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{fmtCurrency(summary.total, summary.currency)}</p>
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
                   <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('spending.groceries')}</p>
-                  <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{summary.grocery_total.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{fmtCurrency(summary.grocery_total, summary.currency)}</p>
                   <p className="text-xs text-emerald-600 dark:text-emerald-400">{groceryPct}%</p>
                 </div>
                 <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
                   <p className="text-xs text-orange-700 dark:text-orange-400">{t('spending.eatingOut')}</p>
-                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{fmtCurrency(summary.eating_out_total, summary.currency)}</p>
                   <p className="text-xs text-orange-600 dark:text-orange-400">{eatingPct}%</p>
                 </div>
                 <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
                   <p className="text-xs text-violet-700 dark:text-violet-400">{t('subscriptions.title')}</p>
-                  <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{summary.subscription_total.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{fmtCurrency(summary.subscription_total, summary.currency)}</p>
                   <p className="text-xs text-violet-600 dark:text-violet-400">{subPct}%</p>
                 </div>
               </div>
@@ -499,7 +499,7 @@ export default function Spending() {
                           <Cell fill="#fb923c" />
                           {summary.subscription_total > 0 && <Cell fill="#a78bfa" />}
                         </Pie>
-                        <Tooltip formatter={(value: any) => `${Number(value).toFixed(2)} ${summary.currency}`} />
+                        <Tooltip formatter={(value: any) => fmtCurrency(Number(value), summary.currency)} />
                         <Legend wrapperStyle={{ fontSize: '12px' }} />
                       </PieChart>
                     </ResponsiveContainer>
@@ -519,7 +519,7 @@ export default function Spending() {
                         }))}>
                           <XAxis dataKey="week" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} width={45} />
-                          <Tooltip formatter={(value: any) => `${Number(value).toFixed(2)} ${summary.currency}`} />
+                          <Tooltip formatter={(value: any) => fmtCurrency(Number(value), summary.currency)} />
                           <Bar dataKey={t('spending.groceries')} stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
                           <Bar dataKey={t('spending.eatingOut')} stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -539,24 +539,24 @@ export default function Spending() {
                           <span className="text-gray-500 dark:text-gray-400 text-xs">
                             {new Date(week.week_start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – {new Date(week.week_end).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </span>
-                          <span className="font-semibold text-gray-800 dark:text-gray-200 text-right sm:hidden">{week.total.toFixed(2)} {week.currency}</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200 text-right sm:hidden">{fmtCurrency(week.total, week.currency)}</span>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-4">
                           <div className="flex-1 flex gap-1 h-5">
                             {week.grocery_total > 0 && (
                               <div className="bg-emerald-200 dark:bg-emerald-500/30 rounded-sm flex items-center px-1 text-xs text-emerald-800 dark:text-emerald-300 whitespace-nowrap"
                                 style={{ width: `${(week.grocery_total / summary.total) * 100}%`, minWidth: '2rem' }}>
-                                {week.grocery_total.toFixed(0)}
+                                {fmtCurrency(week.grocery_total, week.currency, 0)}
                               </div>
                             )}
                             {week.eating_out_total > 0 && (
                               <div className="bg-orange-200 dark:bg-orange-500/30 rounded-sm flex items-center px-1 text-xs text-orange-800 dark:text-orange-300 whitespace-nowrap"
                                 style={{ width: `${(week.eating_out_total / summary.total) * 100}%`, minWidth: '2rem' }}>
-                                {week.eating_out_total.toFixed(0)}
+                                {fmtCurrency(week.eating_out_total, week.currency, 0)}
                               </div>
                             )}
                           </div>
-                          <span className="font-semibold text-gray-800 dark:text-gray-200 w-20 text-right hidden sm:block">{week.total.toFixed(2)} {week.currency}</span>
+                          <span className="font-semibold text-gray-800 dark:text-gray-200 w-20 text-right hidden sm:block">{fmtCurrency(week.total, week.currency)}</span>
                         </div>
                       </div>
                     ))}
@@ -572,7 +572,7 @@ export default function Spending() {
                       {summary.top_stores.map((s) => (
                         <li key={s.store} className="flex justify-between text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{s.store}</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{s.total.toFixed(2)} {userCurrency}</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{fmtCurrency(s.total, userCurrency)}</span>
                         </li>
                       ))}
                     </ul>
@@ -585,7 +585,7 @@ export default function Spending() {
                       {summary.top_restaurants.map((r) => (
                         <li key={r.restaurant} className="flex justify-between text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{r.restaurant}</span>
-                          <span className="font-semibold text-gray-900 dark:text-white">{r.total.toFixed(2)} {userCurrency}</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{fmtCurrency(r.total, userCurrency)}</span>
                         </li>
                       ))}
                     </ul>
@@ -761,7 +761,7 @@ export default function Spending() {
                         </div>
                         <div className="col-span-1">
                           <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                            {(it.quantity * it.price_per_unit - (it.discount || 0)).toFixed(2)}
+                            {fmtCurrency(it.quantity * it.price_per_unit - (it.discount || 0), groceryForm.currency)}
                           </span>
                         </div>
                         <div className="col-span-1 flex justify-center">
@@ -817,7 +817,7 @@ export default function Spending() {
                           <div className="text-right pt-3">
                             <span className="text-[10px] text-gray-400 dark:text-gray-500 block">{t('grocery.net')}</span>
                             <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                              {(it.quantity * it.price_per_unit - (it.discount || 0)).toFixed(2)}
+                              {fmtCurrency(it.quantity * it.price_per_unit - (it.discount || 0), groceryForm.currency)}
                             </span>
                           </div>
                         </div>
@@ -827,7 +827,7 @@ export default function Spending() {
 
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-right">
                     {t('grocery.estimatedTotal')}: <span className="font-semibold text-gray-700 dark:text-gray-300">
-                      {groceryItems.reduce((s, it) => s + it.quantity * it.price_per_unit - (it.discount || 0), 0).toFixed(2)} {groceryForm.currency}
+                      {fmtCurrency(groceryItems.reduce((s, it) => s + it.quantity * it.price_per_unit - (it.discount || 0), 0), groceryForm.currency)}
                     </span>
                   </p>
                 </div>
@@ -875,7 +875,7 @@ export default function Spending() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="font-semibold text-emerald-700 dark:text-emerald-400 text-base sm:text-lg">
-                        {trip.total_amount.toFixed(2)} {trip.currency}
+                        {fmtCurrency(trip.total_amount, trip.currency)}
                       </span>
                       <button onClick={(e) => { e.stopPropagation(); handleGroceryDelete(trip.id); }}
                         className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
@@ -903,16 +903,16 @@ export default function Spending() {
                             <tr key={item.id} className="border-b border-gray-50 dark:border-gray-800/50">
                               <td className="py-1.5 text-gray-700 dark:text-gray-300">{item.name}</td>
                               <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{item.quantity} {t(`units.${item.unit}`, item.unit)}</td>
-                              <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{item.price_per_unit.toFixed(2)}</td>
-                              <td className="py-1.5 text-right text-red-500">{item.discount > 0 ? `-${item.discount.toFixed(2)}` : ''}</td>
-                              <td className="py-1.5 text-right font-medium text-gray-800 dark:text-gray-200">{item.total_price.toFixed(2)} {item.currency}</td>
+                              <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{fmtCurrency(item.price_per_unit, item.currency)}</td>
+                              <td className="py-1.5 text-right text-red-500">{item.discount > 0 ? `-${fmtCurrency(item.discount, item.currency)}` : ''}</td>
+                              <td className="py-1.5 text-right font-medium text-gray-800 dark:text-gray-200">{fmtCurrency(item.total_price, item.currency)}</td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
                           <tr>
                             <td colSpan={4} className="pt-2 text-right font-semibold text-gray-700 dark:text-gray-300">{t('grocery.total')}</td>
-                            <td className="pt-2 text-right font-bold text-emerald-700 dark:text-emerald-400">{trip.total_amount.toFixed(2)} {trip.currency}</td>
+                            <td className="pt-2 text-right font-bold text-emerald-700 dark:text-emerald-400">{fmtCurrency(trip.total_amount, trip.currency)}</td>
                           </tr>
                         </tfoot>
                       </table>
@@ -922,8 +922,8 @@ export default function Spending() {
                             <div className="min-w-0 flex-1">
                               <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</p>
                               <p className="text-xs text-gray-400 dark:text-gray-500">
-                                {item.quantity} {t(`units.${item.unit}`, item.unit)} &times; {item.price_per_unit.toFixed(2)}
-                                {item.discount > 0 && <span className="text-red-500 ml-1">-{item.discount.toFixed(2)}</span>}
+                                {item.quantity} {t(`units.${item.unit}`, item.unit)} &times; {fmtCurrency(item.price_per_unit, item.currency)}
+                                {item.discount > 0 && <span className="text-red-500 ml-1">-{fmtCurrency(item.discount, item.currency)}</span>}
                               </p>
                             </div>
                             <span className="font-medium text-sm text-gray-800 dark:text-gray-200 ml-3 flex-shrink-0">{item.total_price.toFixed(2)}</span>
@@ -931,7 +931,7 @@ export default function Spending() {
                         ))}
                         <div className="flex items-center justify-between pt-2">
                           <span className="font-semibold text-sm text-gray-700 dark:text-gray-300">{t('grocery.total')}</span>
-                          <span className="font-bold text-emerald-700 dark:text-emerald-400">{trip.total_amount.toFixed(2)} {trip.currency}</span>
+                          <span className="font-bold text-emerald-700 dark:text-emerald-400">{fmtCurrency(trip.total_amount, trip.currency)}</span>
                         </div>
                       </div>
                       {trip.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{trip.notes}</p>}
@@ -957,7 +957,7 @@ export default function Spending() {
 
           <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
             <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">{t('eatingOut.thisMonth')}</p>
-            <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{totalEatingThisMonth.toFixed(2)} {userCurrency}</p>
+            <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{fmtCurrency(totalEatingThisMonth, userCurrency)}</p>
           </div>
 
           {showEatingForm && (
@@ -980,7 +980,7 @@ export default function Spending() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({userCurrency}) *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({currencySymbol(userCurrency)}) *</label>
                     <input type="number" required min="0" step="0.01" value={eatingForm.amount}
                       onChange={(e) => setEatingForm({ ...eatingForm, amount: parseFloat(e.target.value) })}
                       className={inputCls} />
@@ -1038,7 +1038,7 @@ export default function Spending() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{exp.amount.toFixed(2)} {exp.currency}</span>
+                    <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{fmtCurrency(exp.amount, exp.currency)}</span>
                     <button onClick={() => handleEatingDelete(exp.id)}
                       className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1067,7 +1067,7 @@ export default function Spending() {
           {/* Monthly total card */}
           <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4">
             <p className="text-sm text-violet-700 dark:text-violet-400 font-medium">{t('subscriptions.monthlyTotal')}</p>
-            <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{totalMonthlySubscriptions.toFixed(2)} {userCurrency}</p>
+            <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{fmtCurrency(totalMonthlySubscriptions, userCurrency)}</p>
             <p className="text-xs text-violet-600 dark:text-violet-400 mt-0.5">{subscriptions.filter(s => s.is_active).length} {t('subscriptions.activeCount')}</p>
           </div>
 
@@ -1084,7 +1084,7 @@ export default function Spending() {
                       className={inputCls} placeholder="e.g. Netflix" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.amount')} ({userCurrency}) *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.amount')} ({currencySymbol(userCurrency)}) *</label>
                     <input type="number" required min="0" step="0.01" value={subForm.amount}
                       onChange={(e) => setSubForm({ ...subForm, amount: parseFloat(e.target.value) })}
                       className={inputCls} />
@@ -1165,8 +1165,8 @@ export default function Spending() {
                       <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full flex-shrink-0">{t(`subscriptions.cat_${sub.category}`)}</span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {sub.amount.toFixed(2)} {sub.currency} / {t(`subscriptions.cycle_${sub.billing_cycle}`)}
-                      {sub.monthly_cost !== sub.amount && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">({sub.monthly_cost.toFixed(2)}/mo)</span>}
+                      {fmtCurrency(sub.amount, sub.currency)} / {t(`subscriptions.cycle_${sub.billing_cycle}`)}
+                      {sub.monthly_cost !== sub.amount && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">({fmtCurrency(sub.monthly_cost, sub.currency)}/mo)</span>}
                       {sub.next_billing_date && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">&middot; {t('subscriptions.next')}: {new Date(sub.next_billing_date).toLocaleDateString()}</span>}
                     </p>
                   </div>

@@ -5,6 +5,7 @@ import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
 import { receiptScanApi, ReceiptScanResult } from '../api/receiptScan';
 import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
+import { fmtCurrency } from '../utils/currency';
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'pieces', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
@@ -300,7 +301,7 @@ export default function GroceryTrips() {
                     </div>
                     <div className="col-span-1">
                       <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                        {(it.quantity * it.price_per_unit - (it.discount || 0)).toFixed(2)}
+                        {fmtCurrency(it.quantity * it.price_per_unit - (it.discount || 0), form.currency)}
                       </span>
                     </div>
                     <div className="col-span-1 flex justify-center">
@@ -358,7 +359,7 @@ export default function GroceryTrips() {
                       <div className="text-right pt-3">
                         <span className="text-[10px] text-gray-400 dark:text-gray-500 block">{t('grocery.net')}</span>
                         <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                          {(it.quantity * it.price_per_unit - (it.discount || 0)).toFixed(2)}
+                          {fmtCurrency(it.quantity * it.price_per_unit - (it.discount || 0), form.currency)}
                         </span>
                       </div>
                     </div>
@@ -368,7 +369,7 @@ export default function GroceryTrips() {
 
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-right">
                 {t('grocery.estimatedTotal')}: <span className="font-semibold text-gray-700 dark:text-gray-300">
-                  {items.reduce((s, it) => s + it.quantity * it.price_per_unit - (it.discount || 0), 0).toFixed(2)} {form.currency}
+                  {fmtCurrency(items.reduce((s, it) => s + it.quantity * it.price_per_unit - (it.discount || 0), 0), form.currency)}
                 </span>
               </p>
             </div>
@@ -416,7 +417,7 @@ export default function GroceryTrips() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="font-semibold text-emerald-700 dark:text-emerald-400 text-base sm:text-lg">
-                    {trip.total_amount.toFixed(2)} {trip.currency}
+                    {fmtCurrency(trip.total_amount, trip.currency)}
                   </span>
                   <button onClick={(e) => { e.stopPropagation(); handleDelete(trip.id); }}
                     className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
@@ -445,16 +446,16 @@ export default function GroceryTrips() {
                         <tr key={item.id} className="border-b border-gray-50 dark:border-gray-800/50">
                           <td className="py-1.5 text-gray-700 dark:text-gray-300">{item.name}</td>
                           <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{item.quantity} {t(`units.${item.unit}`, item.unit)}</td>
-                          <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{item.price_per_unit.toFixed(2)}</td>
-                          <td className="py-1.5 text-right text-red-500">{item.discount > 0 ? `-${item.discount.toFixed(2)}` : ''}</td>
-                          <td className="py-1.5 text-right font-medium text-gray-800 dark:text-gray-200">{item.total_price.toFixed(2)} {item.currency}</td>
+                          <td className="py-1.5 text-right text-gray-500 dark:text-gray-400">{fmtCurrency(item.price_per_unit, item.currency)}</td>
+                          <td className="py-1.5 text-right text-red-500">{item.discount > 0 ? `-${fmtCurrency(item.discount, item.currency)}` : ''}</td>
+                          <td className="py-1.5 text-right font-medium text-gray-800 dark:text-gray-200">{fmtCurrency(item.total_price, item.currency)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
                       <tr>
                         <td colSpan={4} className="pt-2 text-right font-semibold text-gray-700 dark:text-gray-300">{t('grocery.total')}</td>
-                        <td className="pt-2 text-right font-bold text-emerald-700 dark:text-emerald-400">{trip.total_amount.toFixed(2)} {trip.currency}</td>
+                        <td className="pt-2 text-right font-bold text-emerald-700 dark:text-emerald-400">{fmtCurrency(trip.total_amount, trip.currency)}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -465,16 +466,16 @@ export default function GroceryTrips() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{item.name}</p>
                           <p className="text-xs text-gray-400 dark:text-gray-500">
-                            {item.quantity} {t(`units.${item.unit}`, item.unit)} &times; {item.price_per_unit.toFixed(2)}
-                            {item.discount > 0 && <span className="text-red-500 ml-1">-{item.discount.toFixed(2)}</span>}
+                            {item.quantity} {t(`units.${item.unit}`, item.unit)} &times; {fmtCurrency(item.price_per_unit, item.currency)}
+                            {item.discount > 0 && <span className="text-red-500 ml-1">-{fmtCurrency(item.discount, item.currency)}</span>}
                           </p>
                         </div>
-                        <span className="font-medium text-sm text-gray-800 dark:text-gray-200 ml-3 flex-shrink-0">{item.total_price.toFixed(2)}</span>
+                        <span className="font-medium text-sm text-gray-800 dark:text-gray-200 ml-3 flex-shrink-0">{fmtCurrency(item.total_price, item.currency)}</span>
                       </div>
                     ))}
                     <div className="flex items-center justify-between pt-2">
                       <span className="font-semibold text-sm text-gray-700 dark:text-gray-300">{t('grocery.total')}</span>
-                      <span className="font-bold text-emerald-700 dark:text-emerald-400">{trip.total_amount.toFixed(2)} {trip.currency}</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">{fmtCurrency(trip.total_amount, trip.currency)}</span>
                     </div>
                   </div>
                   {trip.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{trip.notes}</p>}

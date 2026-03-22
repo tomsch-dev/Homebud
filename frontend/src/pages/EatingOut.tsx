@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eatingOutApi, EatingOutExpense, CreateEatingOut } from '../api/spending';
 import { useToast } from '../components/Toast';
+import { fmtCurrency } from '../utils/currency';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
@@ -86,7 +87,7 @@ export default function EatingOut() {
 
       <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
         <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">{t('eatingOut.thisMonth')}</p>
-        <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{totalThisMonth.toFixed(2)} EUR</p>
+        <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{fmtCurrency(totalThisMonth, 'EUR')}</p>
       </div>
 
       {showForm && (
@@ -173,7 +174,7 @@ export default function EatingOut() {
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{exp.amount.toFixed(2)} {exp.currency}</span>
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{fmtCurrency(exp.amount, exp.currency)}</span>
                 <button onClick={() => handleDelete(exp.id)}
                   className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

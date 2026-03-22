@@ -6,6 +6,7 @@ import { recipesApi, Recipe } from '../api/recipes';
 import { spendingApi, SpendingSummary } from '../api/spending';
 import { subscriptionApi, Subscription } from '../api/subscriptions';
 import { useUser } from '../hooks/useUser';
+import { fmtCurrency } from '../utils/currency';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ export default function Dashboard() {
         <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <span className="text-2xl">🛒</span>
           <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-            {spending ? `${spending.grocery_total.toFixed(0)} ${userCurrency}` : '—'}
+            {spending ? fmtCurrency(spending.grocery_total, userCurrency, 0) : '—'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.groceryThisMonth')}</p>
         </Link>
@@ -117,7 +118,7 @@ export default function Dashboard() {
         <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <span className="text-2xl">🍽️</span>
           <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-2">
-            {spending ? `${spending.eating_out_total.toFixed(0)} ${userCurrency}` : '—'}
+            {spending ? fmtCurrency(spending.eating_out_total, userCurrency, 0) : '—'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.eatingOutThisMonth')}</p>
         </Link>
@@ -129,7 +130,7 @@ export default function Dashboard() {
               <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">{t('dashboard.subscriptions')}</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-violet-800 dark:text-violet-300">{monthlySubCost.toFixed(2)} {userCurrency}</p>
+              <p className="text-2xl font-bold text-violet-800 dark:text-violet-300">{fmtCurrency(monthlySubCost, userCurrency)}</p>
               <p className="text-xs text-violet-500 dark:text-violet-400">/{t('subscriptions.cycle_monthly').toLowerCase()}</p>
             </div>
           </div>
@@ -141,7 +142,7 @@ export default function Dashboard() {
         <Link to="/spending" className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('dashboard.monthlySpending')}</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white">{spending.total.toFixed(2)} {spending.currency}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{fmtCurrency(spending.total, spending.currency)}</p>
           </div>
           <div className="flex rounded-full overflow-hidden h-3">
             {spending.grocery_total > 0 && <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${Math.round((spending.grocery_total / spending.total) * 100)}%` }} />}
@@ -151,16 +152,16 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" />
-              {t('spending.groceries')} {spending.grocery_total.toFixed(0)}
+              {t('spending.groceries')} {fmtCurrency(spending.grocery_total, spending.currency, 0)}
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" />
-              {t('spending.eatingOut')} {spending.eating_out_total.toFixed(0)}
+              {t('spending.eatingOut')} {fmtCurrency(spending.eating_out_total, spending.currency, 0)}
             </span>
             {spending.subscription_total > 0 && (
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-violet-400 dark:bg-violet-500 rounded-full inline-block" />
-                {t('subscriptions.title')} {spending.subscription_total.toFixed(0)}
+                {t('subscriptions.title')} {fmtCurrency(spending.subscription_total, spending.currency, 0)}
               </span>
             )}
           </div>
