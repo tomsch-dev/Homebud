@@ -371,5 +371,32 @@
     "snacks": "Snacks",
     "frozen": "Frozen",
     "other": "Other"
+  },
+  "tos": {
+    "title": "Terms of Service",
+    "subtitle": "Please review and accept our terms to continue.",
+    "section1Title": "1. Account & Data",
+    "section1Body": "We store your email and name. Your kitchen inventory, recipes, and spending data are stored securely on our servers and are only accessible to you and your household members.",
+    "section2Title": "2. Data Usage",
+    "section2Body": "Your data is used solely to provide the Kitchen Helper service. We do not sell or share your personal data with third parties. Anonymized, aggregated usage statistics may be collected to improve the service.",
+    "section3Title": "3. Third-Party Services",
+    "section3Body": "We use OpenAI for AI-powered features (recipe suggestions, receipt scanning) and Open Food Facts for product lookups. Data sent to these services is limited to what is necessary for the feature to function.",
+    "section4Title": "4. Data Deletion",
+    "section4Body": "You may request deletion of your account and all associated data at any time by contacting us. Upon deletion, all your personal data will be permanently removed from our servers.",
+    "section5Title": "5. Changes to Terms",
+    "section5Body": "We may update these terms from time to time. Continued use of the service after changes constitutes acceptance of the updated terms.",
+    "accept": "I Accept the Terms of Service",
+    "accepting": "Accepting…"
+  },
+  "barcode": {
+    "title": "Scan Barcode",
+    "hint": "Point your camera at a barcode",
+    "cameraError": "Could not access camera. Try entering the barcode manually.",
+    "lookingUp": "Looking up product…",
+    "notFound": "Product not found in database",
+    "tryAgain": "Try Again",
+    "manualEntry": "Or enter barcode manually",
+    "enterBarcode": "e.g. 4006381333931",
+    "lookup": "Look up"
   }
 }

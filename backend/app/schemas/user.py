@@ -19,6 +19,7 @@ class UserOut(BaseModel):
     roles: List[str] = []
     household_id: Optional[str] = None
     preferred_currency: str = "EUR"
+    tos_accepted_at: Optional[datetime] = None
     model_config = {"from_attributes": True}
 
 

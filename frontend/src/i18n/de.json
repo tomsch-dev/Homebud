@@ -371,5 +371,32 @@
     "snacks": "Snacks",
     "frozen": "Tiefkühl",
     "other": "Sonstiges"
+  },
+  "tos": {
+    "title": "Nutzungsbedingungen",
+    "subtitle": "Bitte lies und akzeptiere unsere Nutzungsbedingungen, um fortzufahren.",
+    "section1Title": "1. Konto & Daten",
+    "section1Body": "Wir speichern deine E-Mail-Adresse und deinen Namen. Dein Kücheninventar, deine Rezepte und Ausgabendaten werden sicher auf unseren Servern gespeichert und sind nur für dich und deine Haushaltsmitglieder zugänglich.",
+    "section2Title": "2. Datennutzung",
+    "section2Body": "Deine Daten werden ausschließlich zur Bereitstellung des Kitchen Helper-Dienstes verwendet. Wir verkaufen oder teilen deine persönlichen Daten nicht mit Dritten. Anonymisierte, aggregierte Nutzungsstatistiken können zur Verbesserung des Dienstes erhoben werden.",
+    "section3Title": "3. Drittanbieter-Dienste",
+    "section3Body": "Wir nutzen OpenAI für KI-gestützte Funktionen (Rezeptvorschläge, Kassenbonscan) und Open Food Facts für Produktsuchen. Die an diese Dienste gesendeten Daten sind auf das für die Funktion Notwendige beschränkt.",
+    "section4Title": "4. Datenlöschung",
+    "section4Body": "Du kannst jederzeit die Löschung deines Kontos und aller zugehörigen Daten beantragen. Nach der Löschung werden alle deine persönlichen Daten dauerhaft von unseren Servern entfernt.",
+    "section5Title": "5. Änderungen der Bedingungen",
+    "section5Body": "Wir können diese Bedingungen von Zeit zu Zeit aktualisieren. Die fortgesetzte Nutzung des Dienstes nach Änderungen gilt als Zustimmung zu den aktualisierten Bedingungen.",
+    "accept": "Ich akzeptiere die Nutzungsbedingungen",
+    "accepting": "Wird akzeptiert…"
+  },
+  "barcode": {
+    "title": "Barcode scannen",
+    "hint": "Halte die Kamera auf einen Barcode",
+    "cameraError": "Kamera nicht verfügbar. Gib den Barcode manuell ein.",
+    "lookingUp": "Produkt wird gesucht…",
+    "notFound": "Produkt nicht in der Datenbank gefunden",
+    "tryAgain": "Nochmal versuchen",
+    "manualEntry": "Oder Barcode manuell eingeben",
+    "enterBarcode": "z.B. 4006381333931",
+    "lookup": "Suchen"
   }
 }

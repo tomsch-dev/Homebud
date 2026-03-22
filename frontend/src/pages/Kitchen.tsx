@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
+import { OpenFoodFactsProduct } from '../api/openFoodFacts';
 import FoodItemModal from '../components/FoodItemModal';
 import { useToast } from '../components/Toast';
 import { fmtCurrency, fmtDate } from '../utils/currency';
 import { SkeletonItem } from '../components/Skeleton';
+
+const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'));
 
 const CATEGORY_EMOJI: Record<string, string> = {
   dairy: '🥛',
@@ -56,10 +59,26 @@ export default function Kitchen() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<FoodItem | undefined>();
+  const [showScanner, setShowScanner] = useState(false);
+  const [barcodePrefill, setBarcodePrefill] = useState<Partial<CreateFoodItem> | undefined>();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const toast = useToast();
+
+  const handleBarcodeResult = (product: OpenFoodFactsProduct) => {
+    setBarcodePrefill({
+      name: product.name,
+      category: product.category,
+      calories_kcal: product.calories_kcal,
+      protein_g: product.protein_g,
+      carbs_g: product.carbs_g,
+      fat_g: product.fat_g,
+    });
+    setShowScanner(false);
+    setEditItem(undefined);
+    setShowModal(true);
+  };
 
   const load = () => {
     foodItemsApi.getAll().then(setItems).finally(() => setLoading(false));
@@ -154,12 +173,24 @@ export default function Kitchen() {
             )}
           </p>
         </div>
-        <button
-          onClick={() => { setEditItem(undefined); setShowModal(true); }}
-          className="px-3 sm:px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-semibold shadow-sm min-h-[44px]"
-        >
-          {t('kitchen.addItem')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowScanner(true)}
+            className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold min-h-[44px]"
+            title={t('barcode.title')}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75H16.5v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h3v3h-3v-3z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => { setEditItem(undefined); setBarcodePrefill(undefined); setShowModal(true); }}
+            className="px-3 sm:px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-semibold shadow-sm min-h-[44px]"
+          >
+            {t('kitchen.addItem')}
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -243,7 +274,7 @@ export default function Kitchen() {
           <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">{t('kitchen.empty')}</p>
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('kitchen.emptyHint')}</p>
           <button
-            onClick={() => { setEditItem(undefined); setShowModal(true); }}
+            onClick={() => { setEditItem(undefined); setBarcodePrefill(undefined); setShowModal(true); }}
             className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-sm font-medium transition-colors"
           >
             {t('kitchen.addItem')}
@@ -428,11 +459,18 @@ export default function Kitchen() {
         </div>
       )}
 
+      {showScanner && (
+        <Suspense fallback={null}>
+          <BarcodeScanner onResult={handleBarcodeResult} onClose={() => setShowScanner(false)} />
+        </Suspense>
+      )}
+
       {showModal && (
         <FoodItemModal
           item={editItem}
+          prefill={barcodePrefill}
           onSave={handleSave}
-          onClose={() => setShowModal(false)}
+          onClose={() => { setShowModal(false); setBarcodePrefill(undefined); }}
         />
       )}
 

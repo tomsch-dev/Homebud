@@ -176,36 +176,34 @@ export default function EatingOutTab({ userCurrency, inputCls }: Props) {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6 overflow-hidden">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{t('eatingOut.logExpense')}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.restaurant')} *</label>
-                <input type="text" required value={form.restaurant_name}
-                  onChange={(e) => setForm({ ...form, restaurant_name: e.target.value })}
-                  className={inputCls} placeholder="e.g. Starbucks" />
-              </div>
-              <div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.restaurant')} *</label>
+              <input type="text" required value={form.restaurant_name}
+                onChange={(e) => setForm({ ...form, restaurant_name: e.target.value })}
+                className={inputCls} placeholder="e.g. Starbucks" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="min-w-0">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.date')} *</label>
                 <input type="date" required value={form.expense_date}
                   onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
-                  className={inputCls} />
+                  className={`${inputCls} max-w-full`} />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({currencySymbol(userCurrency)}) *</label>
                 <input type="number" required min="0" step="0.01" value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) })}
                   className={inputCls} />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.mealType')}</label>
-                <select value={form.meal_type} onChange={(e) => setForm({ ...form, meal_type: e.target.value })} className={inputCls}>
-                  {MEAL_TYPES.map((mt) => <option key={mt} value={mt}>{mt.charAt(0).toUpperCase() + mt.slice(1)}</option>)}
-                </select>
-              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.mealType')}</label>
+              <select value={form.meal_type} onChange={(e) => setForm({ ...form, meal_type: e.target.value })} className={inputCls}>
+                {MEAL_TYPES.map((mt) => <option key={mt} value={mt}>{mt.charAt(0).toUpperCase() + mt.slice(1)}</option>)}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>

@@ -10,6 +10,7 @@ interface UserData {
   roles: string[];
   household_id: string | null;
   preferred_currency: string;
+  tos_accepted_at: string | null;
 }
 
 interface UserContextValue {

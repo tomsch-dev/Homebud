@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -34,6 +36,7 @@ async def get_me(
         roles=roles,
         household_id=str(hh_member.household_id) if hh_member else None,
         preferred_currency=user.preferred_currency or "EUR",
+        tos_accepted_at=user.tos_accepted_at,
     )
 
 
@@ -56,4 +59,26 @@ async def update_me(
     return UserOut(id=user.id, email=user.email, name=user.name, avatar=user.avatar,
                    created_at=user.created_at, roles=roles,
                    household_id=str(hh_member.household_id) if hh_member else None,
-                   preferred_currency=user.preferred_currency or "EUR")
+                   preferred_currency=user.preferred_currency or "EUR",
+                   tos_accepted_at=user.tos_accepted_at)
+
+
+@router.post("/me/accept-tos", response_model=UserOut)
+async def accept_tos(
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    user = db.get(User, user_id)
+    if not user:
+        user = User(id=user_id)
+        db.add(user)
+    user.tos_accepted_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
+    roles = [ur.role.name for ur in user.user_roles]
+    hh_member = db.query(HouseholdMember).filter(HouseholdMember.user_id == user_id).first()
+    return UserOut(id=user.id, email=user.email, name=user.name, avatar=user.avatar,
+                   created_at=user.created_at, roles=roles,
+                   household_id=str(hh_member.household_id) if hh_member else None,
+                   preferred_currency=user.preferred_currency or "EUR",
+                   tos_accepted_at=user.tos_accepted_at)

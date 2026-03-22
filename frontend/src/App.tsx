@@ -4,6 +4,7 @@ import ThemeProvider from './components/ThemeProvider';
 import ToastProvider from './components/Toast';
 import Layout from './components/Layout';
 import RequireAuth from './components/RequireAuth';
+import TosGate from './components/TosGate';
 import { UserContext, useUserLoader } from './hooks/useUser';
 import Callback from './pages/Callback';
 
@@ -36,7 +37,7 @@ export default function App() {
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/callback" element={<Callback />} />
-            <Route element={<RequireAuth><Layout /></RequireAuth>}>
+            <Route element={<RequireAuth><TosGate><Layout /></TosGate></RequireAuth>}>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/kitchen" element={<Kitchen />} />

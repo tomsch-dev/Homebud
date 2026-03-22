@@ -28,6 +28,7 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     is_suspended: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     preferred_currency: Mapped[Optional[str]] = mapped_column(String(10), default="EUR", server_default="EUR")
+    tos_accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user_roles: Mapped[List["UserRole"]] = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
     household_members: Mapped[List["HouseholdMember"]] = relationship("HouseholdMember", back_populates="user", cascade="all, delete-orphan")
