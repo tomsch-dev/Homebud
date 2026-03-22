@@ -30,8 +30,8 @@
     "welcome": "Your monthly overview at a glance",
     "inYourKitchen": "Items in kitchen",
     "savedRecipes": "Saved recipes",
-    "groceryThisMonth": "Groceries spent",
-    "eatingOutThisMonth": "Eating out spent",
+    "groceryThisMonth": "Spent on groceries",
+    "eatingOutThisMonth": "Spent on eating out",
     "subscriptions": "Subscriptions",
     "expiredItems": "expired items",
     "monthlySpending": "This Month",
@@ -89,6 +89,7 @@
   "recipes": {
     "title": "Recipes",
     "savedRecipes": "saved recipes",
+    "myRecipes": "My Recipes",
     "aiSuggestions": "AI Suggestions",
     "newRecipe": "+ New Recipe",
     "noRecipes": "No recipes yet",

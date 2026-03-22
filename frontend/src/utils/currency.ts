@@ -26,9 +26,5 @@ export function currencySymbol(code: string): string {
 export function fmtCurrency(amount: number, code: string, decimals = 2): string {
   const sym = currencySymbol(code);
   const val = amount.toFixed(decimals);
-  // Prefix symbols go before, multi-char codes go after
-  if (sym.length <= 1 || sym === 'R$' || sym === 'A$' || sym === 'C$') {
-    return `${sym}${val}`;
-  }
-  return `${val} ${sym}`;
+  return `${val}${sym}`;
 }
