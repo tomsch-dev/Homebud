@@ -180,47 +180,49 @@ export default function Kitchen() {
 
       {/* Category filter chips — horizontal scroll */}
       {items.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:-mx-6 sm:px-6" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-          {/* All chip */}
-          <button
-            onClick={() => setFilterCategory(null)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] ${
-              !filterCategory
-                ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-300 dark:ring-emerald-500/40'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span className="text-base">🏠</span>
-            <span>{t('kitchen.allCategories')}</span>
-            <span className="text-xs opacity-60">{items.length}</span>
-          </button>
+        <div className="-mx-3 px-3 sm:-mx-6 sm:px-6 -my-1">
+          <div className="flex gap-2 overflow-x-auto py-3 px-0.5" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {/* All chip */}
+            <button
+              onClick={() => setFilterCategory(null)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] ${
+                !filterCategory
+                  ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-300 dark:ring-emerald-500/40'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className="text-base">🏠</span>
+              <span>{t('kitchen.allCategories')}</span>
+              <span className="text-xs opacity-60">{items.length}</span>
+            </button>
 
-          {populatedCategories.map((cat) => {
-            const count = categoryMap[cat].length;
-            const active = filterCategory === cat;
-            const expiringCount = (categoryMap[cat] || []).filter((i) => isExpiringSoon(i) || isExpired(i)).length;
+            {populatedCategories.map((cat) => {
+              const count = categoryMap[cat].length;
+              const active = filterCategory === cat;
+              const expiringCount = (categoryMap[cat] || []).filter((i) => isExpiringSoon(i) || isExpired(i)).length;
 
-            return (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(active ? null : cat)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] relative ${
-                  active
-                    ? `${CATEGORY_CHIP_ACTIVE[cat] || CATEGORY_CHIP_ACTIVE.other} ring-2`
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {expiringCount > 0 && !active && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {expiringCount}
-                  </span>
-                )}
-                <span className="text-base">{CATEGORY_EMOJI[cat] || CATEGORY_EMOJI.other}</span>
-                <span className="hidden sm:inline">{catLabel(cat)}</span>
-                <span className="text-xs opacity-60">{count}</span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(active ? null : cat)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all min-h-[40px] relative ${
+                    active
+                      ? `${CATEGORY_CHIP_ACTIVE[cat] || CATEGORY_CHIP_ACTIVE.other} ring-2`
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {expiringCount > 0 && !active && (
+                    <span className="absolute -top-1.5 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {expiringCount}
+                    </span>
+                  )}
+                  <span className="text-base">{CATEGORY_EMOJI[cat] || CATEGORY_EMOJI.other}</span>
+                  <span className="hidden sm:inline">{catLabel(cat)}</span>
+                  <span className="text-xs opacity-60">{count}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

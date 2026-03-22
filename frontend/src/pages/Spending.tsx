@@ -180,7 +180,7 @@ export default function Spending() {
           try {
             await foodItemsApi.create({
               name: item.name, quantity: item.quantity, unit: item.unit,
-              category: undefined, price_per_unit: item.price_per_unit, price_currency: groceryForm.currency,
+              category: item.category || undefined, price_per_unit: item.price_per_unit, price_currency: groceryForm.currency,
             } as CreateFoodItem);
           } catch { /* skip */ }
         }
@@ -224,6 +224,7 @@ export default function Spending() {
           name: item.name, quantity: item.quantity, unit: normalizeUnit(item.unit),
           price_per_unit: item.price_per_unit, discount: Math.abs(item.discount || 0),
           currency: result.currency || groceryForm.currency,
+          category: item.category || undefined,
         }))
       );
       setShowGroceryForm(true);

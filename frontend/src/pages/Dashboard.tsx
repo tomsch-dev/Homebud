@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { foodItemsApi, FoodItem } from '../api/foodItems';
 import { recipesApi, Recipe } from '../api/recipes';
 import { spendingApi, SpendingSummary } from '../api/spending';
+import { subscriptionApi, Subscription } from '../api/subscriptions';
 import { useUser } from '../hooks/useUser';
 
 export default function Dashboard() {
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [spending, setSpending] = useState<SpendingSummary | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
 
   const userCurrency = user?.preferred_currency || 'EUR';
@@ -25,14 +27,20 @@ export default function Dashboard() {
       foodItemsApi.getAll(),
       recipesApi.getAll(),
       spendingApi.getSummary(monthStart, monthEnd, userCurrency).catch(() => null),
+      subscriptionApi.getAll().catch(() => []),
     ])
-      .then(([items, recs, spend]) => {
+      .then(([items, recs, spend, subs]) => {
         setFoodItems(items);
         setRecipes(recs);
         setSpending(spend);
+        setSubscriptions(subs);
       })
       .finally(() => setLoading(false));
   }, [userCurrency]);
+
+  const monthlySubCost = subscriptions
+    .filter((s) => s.is_active)
+    .reduce((sum, s) => sum + s.monthly_cost, 0);
 
   const expiredItems = foodItems.filter((item) => {
     if (!item.expiry_date) return false;
@@ -101,7 +109,7 @@ export default function Dashboard() {
         <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <span className="text-2xl">🛒</span>
           <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
-            {spending ? spending.grocery_total.toFixed(0) : '—'}
+            {spending ? `${spending.grocery_total.toFixed(0)} ${userCurrency}` : '—'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.groceryThisMonth')}</p>
         </Link>
@@ -109,11 +117,24 @@ export default function Dashboard() {
         <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <span className="text-2xl">🍽️</span>
           <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-2">
-            {spending ? spending.eating_out_total.toFixed(0) : '—'}
+            {spending ? `${spending.eating_out_total.toFixed(0)} ${userCurrency}` : '—'}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.eatingOutThisMonth')}</p>
         </Link>
       </div>
+
+      {/* Subscription cost card */}
+      {monthlySubCost > 0 && (
+        <Link to="/spending" className="block bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔄</span>
+              <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('dashboard.subscriptions')}</p>
+            </div>
+            <p className="text-lg font-bold text-violet-800 dark:text-violet-300">{monthlySubCost.toFixed(2)} {userCurrency}<span className="text-xs font-normal text-violet-500 dark:text-violet-400">/{t('subscriptions.cycle_monthly').toLowerCase()}</span></p>
+          </div>
+        </Link>
+      )}
 
       {/* Monthly spending bar */}
       {spending && spending.total > 0 && (
@@ -123,10 +144,11 @@ export default function Dashboard() {
             <p className="text-sm font-bold text-gray-900 dark:text-white">{spending.total.toFixed(2)} {spending.currency}</p>
           </div>
           <div className="flex rounded-full overflow-hidden h-3">
-            <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${Math.round((spending.grocery_total / spending.total) * 100)}%` }} />
-            <div className="bg-orange-400 dark:bg-orange-500 flex-1" />
+            {spending.grocery_total > 0 && <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${Math.round((spending.grocery_total / spending.total) * 100)}%` }} />}
+            {spending.eating_out_total > 0 && <div className="bg-orange-400 dark:bg-orange-500 transition-all" style={{ width: `${Math.round((spending.eating_out_total / spending.total) * 100)}%` }} />}
+            {spending.subscription_total > 0 && <div className="bg-violet-400 dark:bg-violet-500 transition-all" style={{ width: `${Math.round((spending.subscription_total / spending.total) * 100)}%` }} />}
           </div>
-          <div className="flex justify-between mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" />
               {t('spending.groceries')} {spending.grocery_total.toFixed(0)}
@@ -135,6 +157,12 @@ export default function Dashboard() {
               <span className="w-2 h-2 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" />
               {t('spending.eatingOut')} {spending.eating_out_total.toFixed(0)}
             </span>
+            {spending.subscription_total > 0 && (
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-violet-400 dark:bg-violet-500 rounded-full inline-block" />
+                {t('subscriptions.title')} {spending.subscription_total.toFixed(0)}
+              </span>
+            )}
           </div>
         </Link>
       )}

@@ -67,12 +67,26 @@ DISCOUNTS: Discount lines (e.g. "-0.30", "discount") appear directly BELOW the a
 
 DUPLICATES — CRITICAL: If a product name appears MULTIPLE times on the receipt, each occurrence is a SEPARATE purchase. Output EACH as a separate JSON entry, even if name and price are identical.
 
+CATEGORIES — MANDATORY: You MUST assign a category to EVERY item. Pick the best match:
+  dairy = milk, cheese, yogurt, butter, cream, eggs
+  meat = chicken, beef, pork, sausage, ham, turkey, mince
+  seafood = fish, shrimp, salmon, tuna
+  vegetables = salad, tomato, cucumber, pepper, onion, carrot, broccoli, zucchini, potato
+  fruits = apple, banana, orange, berries, grapes, lemon, mango
+  grains = bread, pasta, rice, flour, cereal, oats, noodles
+  beverages = water, juice, soda, beer, wine, coffee, tea
+  condiments = sauce, ketchup, mustard, oil, vinegar, spice, salt, pepper, dressing
+  snacks = chips, chocolate, candy, cookies, nuts, crackers
+  frozen = frozen pizza, ice cream, frozen vegetables, frozen meals
+  other = anything that does not clearly fit above
+  Never leave category empty or null.
+
 Clean up abbreviated names to be human-readable.
 Ignore: subtotal, total, payment, tax, change, receipt footer.
 
 Step 3: Verify your JSON item count matches the counted item lines. If not, you missed something.
 
-Output ONLY valid JSON. Omit fields that are 0 or null.""",
+Output ONLY valid JSON. Omit fields that are 0 or null (except category — always include it).""",
 
     "de": """Du bist ein Kassenbonparser. Extrahiere JSON aus einem Kassenbon-Bild.
 
@@ -105,12 +119,26 @@ RABATTE: Rabattzeilen (z.B. "-0,30", "Rabatt") stehen direkt UNTER dem betroffen
 
 DUPLIKATE — EXTREM WICHTIG: Wenn ein Produktname MEHRFACH auf dem Bon steht, ist jedes Vorkommen ein EIGENER Kauf. Gib JEDEN als separaten JSON-Eintrag aus, auch wenn Name und Preis identisch sind. Beispiel: "Creme z.Kochen" steht 2x auf dem Bon → 2 Einträge im JSON.
 
+KATEGORIEN — PFLICHT: Du MUSST jedem Artikel eine Kategorie zuweisen. Wähle die passendste:
+  dairy = Milch, Käse, Joghurt, Butter, Sahne, Eier, Quark
+  meat = Hähnchen, Rind, Schwein, Wurst, Schinken, Hackfleisch
+  seafood = Fisch, Garnelen, Lachs, Thunfisch
+  vegetables = Salat, Tomate, Gurke, Paprika, Zwiebel, Karotte, Brokkoli, Zucchini, Kartoffel
+  fruits = Apfel, Banane, Orange, Beeren, Trauben, Zitrone, Mango
+  grains = Brot, Pasta, Reis, Mehl, Müsli, Haferflocken, Nudeln
+  beverages = Wasser, Saft, Limo, Bier, Wein, Kaffee, Tee
+  condiments = Soße, Ketchup, Senf, Öl, Essig, Gewürz, Salz, Pfeffer, Dressing
+  snacks = Chips, Schokolade, Bonbons, Kekse, Nüsse, Cracker
+  frozen = Tiefkühlpizza, Eis, Tiefkühlgemüse, Fertiggerichte
+  other = alles was nicht eindeutig in eine Kategorie passt
+  category darf NIEMALS leer oder null sein.
+
 Bereinige abgekürzte Namen (z.B. "KPur.H.Brustfilet" → "Hähnchen Brustfilet").
 Ignoriere: Summe, Gesamt, Zahlungsart, MwSt, Wechselgeld, Bontext.
 
 Schritt 3: Prüfe ob die Anzahl deiner JSON-items mit der Anzahl gezählter Artikelzeilen übereinstimmt. Wenn nicht, hast du etwas vergessen.
 
-Gib NUR gültiges JSON aus. Lasse Felder weg die 0 oder null sind.""",
+Gib NUR gültiges JSON aus. Lasse Felder weg die 0 oder null sind (außer category — immer angeben).""",
 }
 
 
