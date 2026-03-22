@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eatingOutApi, EatingOutExpense, CreateEatingOut } from '../../api/spending';
+import { receiptScanApi } from '../../api/receiptScan';
 import { useToast } from '../../components/Toast';
+import { useUser } from '../../hooks/useUser';
 import { fmtCurrency, currencySymbol, fmtDate } from '../../utils/currency';
 
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
@@ -22,6 +24,9 @@ interface Props {
 export default function EatingOutTab({ userCurrency, inputCls }: Props) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
+  const { isPremium } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
 
   const [expenses, setExpenses] = useState<EatingOutExpense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +72,96 @@ export default function EatingOutTab({ userCurrency, inputCls }: Props) {
     toast.success(t('eatingOut.deleted'));
   };
 
+  const handleScanFile = async (file: File) => {
+    setScanning(true);
+    try {
+      const result = await receiptScanApi.scanEatingOut(file, userCurrency, i18n.language);
+      setForm((prev) => ({
+        ...prev,
+        restaurant_name: result.restaurant_name || prev.restaurant_name,
+        expense_date: result.expense_date || prev.expense_date,
+        amount: result.amount || prev.amount,
+        currency: result.currency || prev.currency,
+        meal_type: result.meal_type || prev.meal_type,
+      }));
+      setShowForm(true);
+      toast.success(t('eatingOut.scanSuccess'));
+    } catch {
+      toast.error(t('eatingOut.scanFailed'));
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleScanFile(file);
+    e.target.value = '';
+  };
+
   return (
     <>
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} capture="environment" />
+
+      {/* Receipt Scan Hero CTA */}
+      {!showForm && (
+        isPremium ? (
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700 rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+            <div className="relative flex items-start gap-4">
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold">{t('eatingOut.scanHeroTitle')}</h3>
+                <p className="text-sm text-orange-100 mt-1">{t('eatingOut.scanHeroDesc')}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+              className="mt-4 w-full py-3.5 bg-white text-orange-700 font-semibold rounded-xl hover:bg-orange-50 disabled:opacity-50 transition-colors text-sm flex items-center justify-center gap-2 min-h-[48px] shadow-lg shadow-orange-900/20"
+            >
+              {scanning ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                  {t('grocery.scanning')}
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {t('eatingOut.scanReceipt')}
+                </>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-5 sm:p-6 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+            <div className="absolute top-2 right-3 px-2 py-0.5 bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-[10px] font-bold rounded-full uppercase tracking-wide">{t('premium.locked')}</div>
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0 pr-16">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('eatingOut.scanHeroTitle')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('eatingOut.scanHeroDesc')}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{t('premium.testPhase')}</p>
+              </div>
+            </div>
+          </div>
+        )
+      )}
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('eatingOut.subtitle')}</p>
         <button onClick={() => setShowForm(!showForm)}

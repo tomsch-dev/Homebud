@@ -107,7 +107,13 @@
     "instructions": "Instructions",
     "prep": "Prep",
     "cook": "Cook",
-    "total": "Total"
+    "total": "Total",
+    "discover": "Discover",
+    "searchRecipes": "Search for Recipes",
+    "searchPlaceholder": "e.g. pasta carbonara, vegan curry...",
+    "search": "Search",
+    "popularSites": "Recipe Websites",
+    "popularSitesDesc": "Browse popular recipe sites — your search term is included if entered above."
   },
   "recipeForm": {
     "title": "New Recipe",
@@ -189,7 +195,12 @@
     "noExpenses": "No eating out expenses yet",
     "deleteConfirm": "Delete this expense?",
     "deleted": "Expense deleted",
-    "failedToSave": "Failed to save."
+    "failedToSave": "Failed to save.",
+    "scanReceipt": "Scan Receipt",
+    "scanHeroTitle": "Scan Your Bill",
+    "scanHeroDesc": "Snap a photo of your restaurant bill and we'll extract the details automatically.",
+    "scanSuccess": "Bill scanned! Review the details below.",
+    "scanFailed": "Failed to scan bill. Please try again or log manually."
   },
   "spending": {
     "title": "Spending Overview",
@@ -311,7 +322,8 @@
     "goToProfile": "Go to Profile",
     "nameRequired": "Please set your name to continue",
     "nameRequiredHint": "We need your name so household members can identify you.",
-    "preferredCurrency": "Preferred Currency"
+    "preferredCurrency": "Preferred Currency",
+    "language": "Language"
   },
   "subscriptions": {
     "title": "Subscriptions",

@@ -107,7 +107,13 @@
     "instructions": "Zubereitung",
     "prep": "Vorbereitung",
     "cook": "Kochen",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "discover": "Entdecken",
+    "searchRecipes": "Rezepte suchen",
+    "searchPlaceholder": "z.B. Pasta Carbonara, veganes Curry...",
+    "search": "Suchen",
+    "popularSites": "Rezept-Webseiten",
+    "popularSitesDesc": "Stöbere auf beliebten Rezeptseiten — dein Suchbegriff wird übernommen, falls oben eingegeben."
   },
   "recipeForm": {
     "title": "Neues Rezept",
@@ -189,7 +195,12 @@
     "noExpenses": "Noch keine Ausgaben erfasst",
     "deleteConfirm": "Diese Ausgabe löschen?",
     "deleted": "Ausgabe gelöscht",
-    "failedToSave": "Speichern fehlgeschlagen."
+    "failedToSave": "Speichern fehlgeschlagen.",
+    "scanReceipt": "Rechnung scannen",
+    "scanHeroTitle": "Rechnung scannen",
+    "scanHeroDesc": "Fotografiere deine Restaurantrechnung und die Details werden automatisch erfasst.",
+    "scanSuccess": "Rechnung gescannt! Prüfe die Details unten.",
+    "scanFailed": "Rechnung konnte nicht gescannt werden. Bitte erneut versuchen oder manuell erfassen."
   },
   "spending": {
     "title": "Ausgabenübersicht",
@@ -311,7 +322,8 @@
     "goToProfile": "Zum Profil",
     "nameRequired": "Bitte gib deinen Namen an, um fortzufahren",
     "nameRequiredHint": "Wir benötigen deinen Namen, damit Haushaltsmitglieder dich erkennen können.",
-    "preferredCurrency": "Bevorzugte Währung"
+    "preferredCurrency": "Bevorzugte Währung",
+    "language": "Sprache"
   },
   "subscriptions": {
     "title": "Abonnements",

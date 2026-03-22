@@ -39,6 +39,14 @@ class ReceiptScanResult(BaseModel):
     items: list[ReceiptItem]
 
 
+class EatingOutScanResult(BaseModel):
+    restaurant_name: Optional[str] = None
+    expense_date: Optional[str] = None
+    amount: float = 0
+    currency: str = "EUR"
+    meal_type: Optional[str] = None
+
+
 SYSTEM_PROMPTS = {
     "en": """You are a receipt parser. Extract JSON from a grocery receipt image.
 
@@ -228,6 +236,111 @@ async def scan_receipt(
             parsed["items"] = merged
 
         return ReceiptScanResult(**parsed)
+
+    except httpx.HTTPStatusError as e:
+        logger.error(f"OpenAI API error: {e.response.status_code} {e.response.text[:300]}")
+        raise HTTPException(status_code=502, detail="Receipt scanning failed — OpenAI API error")
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        logger.error(f"Failed to parse response: {e}\nRaw: {content[:500] if content else 'N/A'}")
+        raise HTTPException(status_code=502, detail="Receipt scanning failed — could not parse response")
+    except Exception as e:
+        logger.error(f"Receipt scanning failed: {e}")
+        raise HTTPException(status_code=502, detail="Receipt scanning failed")
+
+
+EATING_OUT_PROMPTS = {
+    "en": """You are a restaurant bill parser. Extract JSON from a restaurant/cafe receipt image.
+
+Format: {"restaurant_name": "...", "expense_date": "YYYY-MM-DD", "amount": 0.00, "currency": "EUR", "meal_type": "lunch"}
+
+meal_type must be one of: breakfast, lunch, dinner, coffee, snack, other
+- Determine based on time of day if shown, or items ordered (e.g. coffee+pastry = coffee, full meal = lunch/dinner)
+
+amount should be the TOTAL paid (including tip if shown on receipt).
+Clean up abbreviated restaurant names to be readable.
+
+Output ONLY valid JSON.""",
+
+    "de": """Du bist ein Restaurantbon-Parser. Extrahiere JSON aus einem Restaurant-/Café-Kassenbon.
+
+Format: {"restaurant_name": "...", "expense_date": "YYYY-MM-DD", "amount": 0.00, "currency": "EUR", "meal_type": "lunch"}
+
+meal_type muss eins von sein: breakfast, lunch, dinner, coffee, snack, other
+- Bestimme anhand der Uhrzeit oder der bestellten Artikel (z.B. Kaffee+Gebäck = coffee, ganzes Essen = lunch/dinner)
+
+amount soll der GESAMTBETRAG sein (inkl. Trinkgeld falls auf dem Bon).
+Bereinige abgekürzte Restaurantnamen.
+
+Gib NUR gültiges JSON aus.""",
+}
+
+
+@router.post("/scan-eating-out", response_model=EatingOutScanResult)
+async def scan_eating_out_receipt(
+    file: UploadFile = File(...),
+    currency: str = Form("EUR"),
+    lang: str = Form("en"),
+    _user: str = Depends(require_premium),
+):
+    """Upload a restaurant receipt image and extract expense details via GPT-4o vision."""
+    if not settings.openai_api_key:
+        raise HTTPException(status_code=503, detail="OpenAI API key not configured")
+
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported image type: {file.content_type}")
+
+    contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+
+    b64 = base64.b64encode(contents).decode("utf-8")
+    mime_type = file.content_type or "image/jpeg"
+
+    content = None
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.openai_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "gpt-4o",
+                    "messages": [
+                        {"role": "system", "content": EATING_OUT_PROMPTS.get(lang, EATING_OUT_PROMPTS["en"])},
+                        {"role": "user", "content": [
+                            {"type": "image_url", "image_url": {
+                                "url": f"data:{mime_type};base64,{b64}",
+                                "detail": "low",
+                            }},
+                            {"type": "text", "text": f"Parse this restaurant/cafe receipt. Default currency: {currency}."},
+                        ]},
+                    ],
+                    "max_tokens": 512,
+                    "temperature": 0.1,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        content = data["choices"][0]["message"]["content"]
+
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+        content = content.strip()
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            content = re.sub(r',\s*([}\]])', r'\1', content)
+            parsed = json.loads(content)
+
+        return EatingOutScanResult(**parsed)
 
     except httpx.HTTPStatusError as e:
         logger.error(f"OpenAI API error: {e.response.status_code} {e.response.text[:300]}")

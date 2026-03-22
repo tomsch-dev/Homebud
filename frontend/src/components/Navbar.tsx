@@ -16,16 +16,9 @@ export default function Navbar() {
   const location = useLocation();
   const { signOut } = useLogto();
   const { theme, toggle } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { isAdmin } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
-
-  const currentLang = i18n.language?.startsWith('de') ? 'de' : 'en';
-  const toggleLang = () => {
-    const next = currentLang === 'de' ? 'en' : 'de';
-    i18n.changeLanguage(next);
-    localStorage.setItem('language', next);
-  };
 
   const isActive = (path: string) => location.pathname === path || (path !== '/dashboard' && location.pathname.startsWith(path));
 
@@ -89,14 +82,6 @@ export default function Navbar() {
 
             {/* Right side controls */}
             <div className="flex items-center gap-1.5">
-              <button
-                onClick={toggleLang}
-                className="px-2 py-1.5 rounded-lg text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-                title={currentLang === 'de' ? 'Switch to English' : 'Auf Deutsch wechseln'}
-              >
-                {currentLang === 'de' ? 'EN' : 'DE'}
-              </button>
-
               <button
                 onClick={toggle}
                 className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"

@@ -6,6 +6,11 @@ import { useUser } from '../hooks/useUser';
 import { useToast } from '../components/Toast';
 import { SUPPORTED_CURRENCIES, currencySymbol } from '../utils/currency';
 
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+];
+
 interface HouseholdData {
   id: string;
   name: string;
@@ -14,7 +19,7 @@ interface HouseholdData {
 }
 
 export default function Profile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, refresh } = useUser();
   const { signOut } = useLogto();
   const toast = useToast();
@@ -22,6 +27,7 @@ export default function Profile() {
   const CURRENCIES = SUPPORTED_CURRENCIES;
   const [name, setName] = useState(user?.name || '');
   const [currency, setCurrency] = useState(user?.preferred_currency || 'EUR');
+  const [language, setLanguage] = useState(i18n.language?.startsWith('de') ? 'de' : 'en');
   const [saving, setSaving] = useState(false);
   const [household, setHousehold] = useState<HouseholdData | null>(null);
   const [householdLoading, setHouseholdLoading] = useState(true);
@@ -44,6 +50,8 @@ export default function Profile() {
     setSaving(true);
     try {
       await client.patch('/api/users/me', { name, preferred_currency: currency });
+      i18n.changeLanguage(language);
+      localStorage.setItem('language', language);
       toast.success(t('profile.saved'));
       refresh();
     } catch { toast.error(t('profile.saveFailed')); }
@@ -111,6 +119,26 @@ export default function Profile() {
           <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
             {CURRENCIES.map((c) => <option key={c} value={c}>{c} ({currencySymbol(c)})</option>)}
           </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{t('profile.language')}</label>
+          <div className="flex gap-2">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setLanguage(l.code)}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                  language === l.code
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                    : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <span>{l.flag}</span>
+                <span>{l.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <button
           onClick={saveProfile}

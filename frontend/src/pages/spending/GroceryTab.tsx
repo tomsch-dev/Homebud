@@ -202,10 +202,10 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
         )
       )}
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t('grocery.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex-1 min-w-0">{t('grocery.subtitle')}</p>
         <button onClick={() => { setShowForm(!showForm); dismissScan(); }}
-          className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
+          className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px] whitespace-nowrap flex-shrink-0">
           {showForm ? t('common.cancel') : t('grocery.logTrip')}
         </button>
       </div>

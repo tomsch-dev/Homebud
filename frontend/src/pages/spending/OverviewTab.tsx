@@ -4,6 +4,23 @@ import { spendingApi, SpendingSummary } from '../../api/spending';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { fmtCurrency, fmtDate } from '../../utils/currency';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+function CustomTooltip({ active, payload, currencyCode }: { active?: boolean; payload?: any[]; currencyCode: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-lg px-3 py-2 text-xs shadow-xl border border-gray-700/50">
+      {payload.map((entry: any, i: number) => (
+        <div key={i} className="flex items-center gap-2 py-0.5">
+          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+          <span className="text-gray-300">{entry.name}:</span>
+          <span className="font-semibold">{fmtCurrency(Number(entry.value), currencyCode)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type Period = 'this-month' | 'last-month' | '3-months' | 'year' | 'custom';
 
 function getDatesForPeriod(period: Period): { start: string; end: string } {
@@ -177,7 +194,7 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
                       <Cell fill="#fb923c" />
                       {summary.subscription_total > 0 && <Cell fill="#a78bfa" />}
                     </Pie>
-                    <Tooltip formatter={(value: any) => fmtCurrency(Number(value), summary.currency)} />
+                    <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
@@ -193,10 +210,10 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
                       week: fmtDate(w.week_start, lang, { month: 'short', day: 'numeric' }),
                       [t('spending.groceries')]: w.grocery_total,
                       [t('spending.eatingOut')]: w.eating_out_total,
-                    }))}>
+                    }))} barCategoryGap="30%" maxBarSize={40}>
                       <XAxis dataKey="week" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} width={45} />
-                      <Tooltip formatter={(value: any) => fmtCurrency(Number(value), summary.currency)} />
+                      <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
                       <Bar dataKey={t('spending.groceries')} stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
                       <Bar dataKey={t('spending.eatingOut')} stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
                     </BarChart>

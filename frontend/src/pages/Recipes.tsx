@@ -7,7 +7,16 @@ import RecipeFormModal from '../components/RecipeFormModal';
 import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
 
-type Tab = 'recipes' | 'ai';
+type Tab = 'recipes' | 'ai' | 'discover';
+
+const RECIPE_SITES = [
+  { name: 'Chefkoch', url: 'https://www.chefkoch.de/rs/s0/', icon: '🇩🇪', lang: 'de' },
+  { name: 'AllRecipes', url: 'https://www.allrecipes.com/search?q=', icon: '🇺🇸', lang: 'en' },
+  { name: 'BBC Good Food', url: 'https://www.bbcgoodfood.com/search?q=', icon: '🇬🇧', lang: 'en' },
+  { name: 'Epicurious', url: 'https://www.epicurious.com/search/', icon: '🍽️', lang: 'en' },
+  { name: 'Simply Recipes', url: 'https://www.simplyrecipes.com/search?q=', icon: '🥘', lang: 'en' },
+  { name: 'Lecker', url: 'https://www.lecker.de/suche?search=', icon: '🇩🇪', lang: 'de' },
+];
 
 export default function Recipes() {
   const { t, i18n } = useTranslation();
@@ -26,6 +35,7 @@ export default function Recipes() {
   const [suggestions, setSuggestions] = useState<RecipeSuggestion[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [savedIdx, setSavedIdx] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   const load = () => {
     Promise.all([recipesApi.getAll(), foodItemsApi.getAll()])
@@ -150,6 +160,14 @@ export default function Recipes() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
             {t('recipes.aiSuggestions')}
+          </span>
+        </button>
+        <button onClick={() => setTab('discover')} className={tabCls(tab === 'discover')}>
+          <span className="flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            {t('recipes.discover')}
           </span>
         </button>
       </div>
@@ -359,6 +377,74 @@ export default function Recipes() {
             </>
           )}
         </>
+      )}
+
+      {/* Discover tab */}
+      {tab === 'discover' && (
+        <div className="space-y-4">
+          {/* Search box */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t('recipes.searchRecipes')}</h2>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' recipe')}`, '_blank');
+                    }
+                  }}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl pl-9 pr-3 py-3 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+                  placeholder={t('recipes.searchPlaceholder')}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (searchQuery.trim()) {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' recipe')}`, '_blank');
+                  }
+                }}
+                disabled={!searchQuery.trim()}
+                className="px-5 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium text-sm disabled:opacity-50 min-h-[48px] whitespace-nowrap"
+              >
+                {t('recipes.search')}
+              </button>
+            </div>
+          </div>
+
+          {/* Recipe sites */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t('recipes.popularSites')}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t('recipes.popularSitesDesc')}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {RECIPE_SITES
+                .filter((site) => site.lang === (i18n.language?.startsWith('de') ? 'de' : 'en') || site.lang === 'all')
+                .concat(RECIPE_SITES.filter((site) => site.lang !== (i18n.language?.startsWith('de') ? 'de' : 'en') && site.lang !== 'all'))
+                .map((site) => (
+                <a
+                  key={site.name}
+                  href={searchQuery.trim() ? `${site.url}${encodeURIComponent(searchQuery)}` : site.url.replace(/[?/]$/, '').replace(/search$/, '')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-gray-200 dark:hover:border-gray-700 transition-colors group"
+                >
+                  <span className="text-xl flex-shrink-0">{site.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{site.name}</p>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {showModal && (
