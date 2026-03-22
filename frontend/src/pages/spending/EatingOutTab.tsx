@@ -101,7 +101,7 @@ export default function EatingOutTab({ userCurrency, inputCls }: Props) {
 
   return (
     <>
-      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} capture="environment" />
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleFileChange} />
 
       {/* Receipt Scan Hero CTA */}
       {!showForm && (
