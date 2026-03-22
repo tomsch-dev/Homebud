@@ -143,7 +143,7 @@ export default function Kitchen() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('kitchen.title')}</h1>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
             {items.length} {t('common.items')} {t('kitchen.tracked')}
             {items.filter(isExpired).length > 0 && (
               <span className="text-red-500 ml-2">
@@ -167,7 +167,7 @@ export default function Kitchen() {
           placeholder={t('kitchen.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 focus:border-transparent transition-colors min-h-[44px]"
+          className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded-xl px-4 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 focus:border-transparent transition-colors min-h-[44px]"
         />
         {search && (
           <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">
@@ -180,7 +180,7 @@ export default function Kitchen() {
 
       {/* Category filter chips — horizontal scroll */}
       {items.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:-mx-6 sm:px-6" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
           {/* All chip */}
           <button
             onClick={() => setFilterCategory(null)}

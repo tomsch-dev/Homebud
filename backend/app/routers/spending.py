@@ -7,7 +7,15 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.models.eating_out import EatingOutExpense
+from app.models.subscription import Subscription
 from app.schemas.spending import SpendingSummary, WeeklyBreakdown
+
+CYCLE_MONTHLY_FACTOR = {
+    "weekly": 52 / 12,
+    "monthly": 1.0,
+    "quarterly": 1 / 3,
+    "yearly": 1 / 12,
+}
 
 router = APIRouter(prefix="/spending", tags=["spending"])
 
@@ -78,12 +86,21 @@ def spending_summary(
         key=lambda x: x["total"], reverse=True
     )[:5]
 
+    # Active subscriptions — prorate monthly cost by number of months in range
+    active_subs = db.query(Subscription).filter(Subscription.is_active == True).all()  # noqa: E712
+    months_in_range = max(1, round((end - start).days / 30.44))
+    subscription_total = sum(
+        sub.amount * CYCLE_MONTHLY_FACTOR.get(sub.billing_cycle, 1.0) * months_in_range
+        for sub in active_subs
+    )
+
     return SpendingSummary(
         period_start=start,
         period_end=end,
         grocery_total=round(grocery_total, 2),
         eating_out_total=round(eating_out_total, 2),
-        total=round(grocery_total + eating_out_total, 2),
+        subscription_total=round(subscription_total, 2),
+        total=round(grocery_total + eating_out_total + subscription_total, 2),
         currency=currency,
         weekly_breakdown=weekly_breakdown,
         top_stores=top_stores,

@@ -4,8 +4,10 @@ import { spendingApi, SpendingSummary, eatingOutApi, EatingOutExpense, CreateEat
 import { groceryApi, GroceryTrip, CreateGroceryTrip, CreateGroceryTripItem } from '../api/grocery';
 import { foodItemsApi, FoodItem, CreateFoodItem } from '../api/foodItems';
 import { receiptScanApi, ReceiptScanResult } from '../api/receiptScan';
+import { subscriptionApi, Subscription, CreateSubscription } from '../api/subscriptions';
 import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const UNITS = ['g', 'kg', 'ml', 'l', 'pieces', 'tbsp', 'tsp', 'cup', 'oz', 'lb'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'coffee', 'snack', 'other'];
@@ -27,7 +29,7 @@ const normalizeUnit = (u: string): string => {
   return UNIT_ALIASES[lower] || (UNITS.includes(lower) ? lower : UNITS.includes(u) ? u : 'pieces');
 };
 
-type Tab = 'overview' | 'grocery' | 'eating-out';
+type Tab = 'overview' | 'grocery' | 'eating-out' | 'subscriptions';
 type Period = 'this-month' | 'last-month' | '3-months' | 'year' | 'custom';
 
 function getDatesForPeriod(period: Period): { start: string; end: string } {
@@ -96,6 +98,18 @@ export default function Spending() {
     amount: 0, currency: userCurrency, meal_type: 'lunch', notes: '',
   });
 
+  // --- Subscription state ---
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [showSubForm, setShowSubForm] = useState(false);
+  const [subSaving, setSubSaving] = useState(false);
+  const [editSub, setEditSub] = useState<Subscription | null>(null);
+  const BILLING_CYCLES = ['monthly', 'yearly', 'weekly', 'quarterly'];
+  const SUB_CATEGORIES = ['streaming', 'music', 'software', 'fitness', 'cloud', 'insurance', 'other'];
+  const [subForm, setSubForm] = useState<CreateSubscription>({
+    name: '', amount: 0, currency: userCurrency, billing_cycle: 'monthly', category: 'other', notes: '',
+  });
+
   // --- Loaders ---
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true);
@@ -120,6 +134,10 @@ export default function Spending() {
     eatingOutApi.getAll().then(setExpenses).finally(() => setEatingLoading(false));
   };
 
+  const loadSubs = () => {
+    subscriptionApi.getAll().then(setSubscriptions).finally(() => setSubsLoading(false));
+  };
+
   const selectPeriod = (p: Period) => {
     setPeriod(p);
     if (p !== 'custom') {
@@ -134,6 +152,7 @@ export default function Spending() {
   useEffect(() => { loadOverview(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { loadGrocery(); }, []);
   useEffect(() => { loadEating(); }, []);
+  useEffect(() => { loadSubs(); }, []);
 
   // --- Grocery handlers ---
   const addGroceryItem = () =>
@@ -250,6 +269,57 @@ export default function Spending() {
     loadOverview();
   };
 
+  // --- Subscription handlers ---
+  const handleSubSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubSaving(true);
+    try {
+      if (editSub) {
+        await subscriptionApi.update(editSub.id, subForm);
+      } else {
+        await subscriptionApi.create(subForm);
+      }
+      setShowSubForm(false);
+      setEditSub(null);
+      setSubForm({ name: '', amount: 0, currency: userCurrency, billing_cycle: 'monthly', category: 'other', notes: '' });
+      loadSubs();
+      loadOverview();
+    } catch {
+      toast.error(t('subscriptions.failedToSave'));
+    } finally {
+      setSubSaving(false);
+    }
+  };
+
+  const handleSubDelete = async (id: string) => {
+    const confirmed = await toast.confirm(t('subscriptions.deleteConfirm'));
+    if (!confirmed) return;
+    await subscriptionApi.delete(id);
+    setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+    toast.success(t('subscriptions.deleted'));
+    loadOverview();
+  };
+
+  const handleSubToggle = async (sub: Subscription) => {
+    await subscriptionApi.update(sub.id, { is_active: !sub.is_active });
+    loadSubs();
+    loadOverview();
+  };
+
+  const startEditSub = (sub: Subscription) => {
+    setEditSub(sub);
+    setSubForm({
+      name: sub.name, amount: sub.amount, currency: sub.currency,
+      billing_cycle: sub.billing_cycle, category: sub.category,
+      next_billing_date: sub.next_billing_date || undefined, notes: sub.notes || '',
+    });
+    setShowSubForm(true);
+  };
+
+  const totalMonthlySubscriptions = subscriptions
+    .filter((s) => s.is_active)
+    .reduce((sum, s) => sum + s.monthly_cost, 0);
+
   const totalEatingThisMonth = expenses
     .filter((e) => {
       const d = new Date(e.expense_date);
@@ -259,7 +329,9 @@ export default function Spending() {
     .reduce((sum, e) => sum + e.amount, 0);
 
   // --- Shared ---
-  const pct = summary && summary.total > 0 ? Math.round((summary.grocery_total / summary.total) * 100) : 0;
+  const groceryPct = summary && summary.total > 0 ? Math.round((summary.grocery_total / summary.total) * 100) : 0;
+  const eatingPct = summary && summary.total > 0 ? Math.round((summary.eating_out_total / summary.total) * 100) : 0;
+  const subPct = summary && summary.total > 0 ? Math.round((summary.subscription_total / summary.total) * 100) : 0;
   const inputCls = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2.5 text-base sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 min-h-[44px]';
   const inputClsSm = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-2 text-sm sm:text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 min-h-[40px]';
 
@@ -306,6 +378,13 @@ export default function Spending() {
           </svg>
           <span className="hidden sm:inline">{t('spending.eatingOut')}</span>
           <span className="sm:hidden">{t('spending.eatingOut')}</span>
+        </button>
+        <button onClick={() => setTab('subscriptions')} className={tabCls(tab === 'subscriptions')}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="hidden sm:inline">{t('subscriptions.title')}</span>
+          <span className="sm:hidden">{t('subscriptions.titleShort')}</span>
         </button>
       </div>
 
@@ -360,37 +439,96 @@ export default function Spending() {
           {summary && (
             <div className="space-y-4 sm:space-y-6">
               {/* Summary cards — horizontal scroll on mobile */}
-              <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 sm:overflow-visible snap-x snap-mandatory">
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{summary.total.toFixed(2)}</p>
-                  <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">{summary.currency}</p>
+              <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 sm:overflow-visible snap-x snap-mandatory">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{summary.total.toFixed(2)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{summary.currency}</p>
                 </div>
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
-                  <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-400">{t('spending.groceries')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{summary.grocery_total.toFixed(2)}</p>
-                  <p className="text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">{pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('spending.groceries')}</p>
+                  <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">{summary.grocery_total.toFixed(2)}</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">{groceryPct}%</p>
                 </div>
-                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4 sm:p-5 min-w-[160px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
-                  <p className="text-xs sm:text-sm text-orange-700 dark:text-orange-400">{t('spending.eatingOut')}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
-                  <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400">{100 - pct}% {t('spending.ofTotal')} &middot; {summary.currency}</p>
+                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs text-orange-700 dark:text-orange-400">{t('spending.eatingOut')}</p>
+                  <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400">{eatingPct}%</p>
                 </div>
+                {summary.subscription_total > 0 && (
+                  <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                    <p className="text-xs text-violet-700 dark:text-violet-400">{t('subscriptions.title')}</p>
+                    <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{summary.subscription_total.toFixed(2)}</p>
+                    <p className="text-xs text-violet-600 dark:text-violet-400">{subPct}%</p>
+                  </div>
+                )}
               </div>
 
               {summary.total > 0 && (
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('spending.groceryVsEating')}</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('spending.spendingBreakdown')}</p>
                   <div className="flex rounded-full overflow-hidden h-5">
-                    <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
-                    <div className="bg-orange-400 dark:bg-orange-500 flex-1" />
+                    {groceryPct > 0 && <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${groceryPct}%` }} />}
+                    {eatingPct > 0 && <div className="bg-orange-400 dark:bg-orange-500 transition-all" style={{ width: `${eatingPct}%` }} />}
+                    {subPct > 0 && <div className="bg-violet-400 dark:bg-violet-500 transition-all" style={{ width: `${subPct}%` }} />}
                   </div>
-                  <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" /> {t('spending.groceries')}</span>
-                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" /> {t('spending.eatingOut')}</span>
+                  <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" /> {t('spending.groceries')} {groceryPct}%</span>
+                    <span className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" /> {t('spending.eatingOut')} {eatingPct}%</span>
+                    {subPct > 0 && <span className="flex items-center gap-1"><span className="w-3 h-3 bg-violet-400 dark:bg-violet-500 rounded-full inline-block" /> {t('subscriptions.title')} {subPct}%</span>}
                   </div>
                 </div>
               )}
+
+              {/* Charts */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Donut chart — category breakdown */}
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                  <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.spendingBreakdown')}</h2>
+                  <div className="h-52">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: t('spending.groceries'), value: summary.grocery_total },
+                            { name: t('spending.eatingOut'), value: summary.eating_out_total },
+                            ...(summary.subscription_total > 0 ? [{ name: t('subscriptions.title'), value: summary.subscription_total }] : []),
+                          ].filter(d => d.value > 0)}
+                          cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value"
+                        >
+                          <Cell fill="#34d399" />
+                          <Cell fill="#fb923c" />
+                          {summary.subscription_total > 0 && <Cell fill="#a78bfa" />}
+                        </Pie>
+                        <Tooltip formatter={(value: any) => `${Number(value).toFixed(2)} ${summary.currency}`} />
+                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Bar chart — weekly spending */}
+                {summary.weekly_breakdown.length > 0 && (
+                  <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                    <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.weeklyChart')}</h2>
+                    <div className="h-52">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={summary.weekly_breakdown.map(w => ({
+                          week: new Date(w.week_start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                          [t('spending.groceries')]: w.grocery_total,
+                          [t('spending.eatingOut')]: w.eating_out_total,
+                        }))}>
+                          <XAxis dataKey="week" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} width={45} />
+                          <Tooltip formatter={(value: any) => `${Number(value).toFixed(2)} ${summary.currency}`} />
+                          <Bar dataKey={t('spending.groceries')} stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
+                          <Bar dataKey={t('spending.eatingOut')} stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {summary.weekly_breakdown.length > 0 && (
                 <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
@@ -903,6 +1041,144 @@ export default function Spending() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{exp.amount.toFixed(2)} {exp.currency}</span>
                     <button onClick={() => handleEatingDelete(exp.id)}
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ========== SUBSCRIPTIONS TAB ========== */}
+      {tab === 'subscriptions' && (
+        <>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('subscriptions.subtitle')}</p>
+            <button onClick={() => { setShowSubForm(!showSubForm); setEditSub(null); setSubForm({ name: '', amount: 0, currency: userCurrency, billing_cycle: 'monthly', category: 'other', notes: '' }); }}
+              className="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium min-h-[44px]">
+              {showSubForm ? t('common.cancel') : t('subscriptions.addSub')}
+            </button>
+          </div>
+
+          {/* Monthly total card */}
+          <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4">
+            <p className="text-sm text-violet-700 dark:text-violet-400 font-medium">{t('subscriptions.monthlyTotal')}</p>
+            <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{totalMonthlySubscriptions.toFixed(2)} {userCurrency}</p>
+            <p className="text-xs text-violet-600 dark:text-violet-400 mt-0.5">{subscriptions.filter(s => s.is_active).length} {t('subscriptions.activeCount')}</p>
+          </div>
+
+          {/* Add/Edit form */}
+          {showSubForm && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6">
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">{editSub ? t('subscriptions.editSub') : t('subscriptions.addSub')}</h2>
+              <form onSubmit={handleSubSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.name')} *</label>
+                    <input type="text" required value={subForm.name}
+                      onChange={(e) => setSubForm({ ...subForm, name: e.target.value })}
+                      className={inputCls} placeholder="e.g. Netflix" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.amount')} ({userCurrency}) *</label>
+                    <input type="number" required min="0" step="0.01" value={subForm.amount}
+                      onChange={(e) => setSubForm({ ...subForm, amount: parseFloat(e.target.value) })}
+                      className={inputCls} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.billingCycle')}</label>
+                    <select value={subForm.billing_cycle} onChange={(e) => setSubForm({ ...subForm, billing_cycle: e.target.value })} className={inputCls}>
+                      {BILLING_CYCLES.map((c) => <option key={c} value={c}>{t(`subscriptions.cycle_${c}`)}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.category')}</label>
+                    <select value={subForm.category} onChange={(e) => setSubForm({ ...subForm, category: e.target.value })} className={inputCls}>
+                      {SUB_CATEGORIES.map((c) => <option key={c} value={c}>{t(`subscriptions.cat_${c}`)}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('subscriptions.nextBilling')}</label>
+                    <input type="date" value={subForm.next_billing_date || ''}
+                      onChange={(e) => setSubForm({ ...subForm, next_billing_date: e.target.value || undefined })}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.notes')}</label>
+                    <input type="text" value={subForm.notes ?? ''} onChange={(e) => setSubForm({ ...subForm, notes: e.target.value })} className={inputCls} />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => { setShowSubForm(false); setEditSub(null); }}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors min-h-[48px]">{t('common.cancel')}</button>
+                  <button type="submit" disabled={subSaving}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl transition-colors min-h-[48px]">
+                    {subSaving ? t('common.saving') : t('common.save')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Subscription list */}
+          {subsLoading ? (
+            <div className="flex items-center justify-center h-48">
+              <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : subscriptions.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <p className="text-lg font-medium text-gray-700 dark:text-gray-300">{t('subscriptions.noSubs')}</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('subscriptions.noSubsHint')}</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {subscriptions.map((sub) => (
+                <div key={sub.id} className={`bg-white dark:bg-gray-900 border rounded-xl p-3 sm:p-4 flex items-center gap-3 transition-opacity ${sub.is_active ? 'border-gray-200 dark:border-gray-800' : 'border-gray-100 dark:border-gray-800/50 opacity-60'}`}>
+                  <button onClick={() => handleSubToggle(sub)}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${sub.is_active ? 'bg-violet-100 dark:bg-violet-500/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                    {sub.is_active ? (
+                      <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className={`font-semibold truncate ${sub.is_active ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 line-through'}`}>{sub.name}</h3>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full flex-shrink-0">{t(`subscriptions.cat_${sub.category}`)}</span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {sub.amount.toFixed(2)} {sub.currency} / {t(`subscriptions.cycle_${sub.billing_cycle}`)}
+                      {sub.monthly_cost !== sub.amount && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">({sub.monthly_cost.toFixed(2)}/mo)</span>}
+                      {sub.next_billing_date && <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">&middot; {t('subscriptions.next')}: {new Date(sub.next_billing_date).toLocaleDateString()}</span>}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => startEditSub(sub)}
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button onClick={() => handleSubDelete(sub.id)}
                       className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -3,34 +3,43 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { foodItemsApi, FoodItem } from '../api/foodItems';
 import { recipesApi, Recipe } from '../api/recipes';
+import { spendingApi, SpendingSummary } from '../api/spending';
+import { useUser } from '../hooks/useUser';
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { user } = useUser();
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [spending, setSpending] = useState<SpendingSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const userCurrency = user?.preferred_currency || 'EUR';
+
   useEffect(() => {
-    Promise.all([foodItemsApi.getAll(), recipesApi.getAll()])
-      .then(([items, recs]) => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    Promise.all([
+      foodItemsApi.getAll(),
+      recipesApi.getAll(),
+      spendingApi.getSummary(monthStart, monthEnd, userCurrency).catch(() => null),
+    ])
+      .then(([items, recs, spend]) => {
         setFoodItems(items);
         setRecipes(recs);
+        setSpending(spend);
       })
       .finally(() => setLoading(false));
-  }, []);
-
-  const expiringItems = foodItems.filter((item) => {
-    if (!item.expiry_date) return false;
-    const daysUntilExpiry = Math.ceil(
-      (new Date(item.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    return daysUntilExpiry <= 3 && daysUntilExpiry >= 0;
-  });
+  }, [userCurrency]);
 
   const expiredItems = foodItems.filter((item) => {
     if (!item.expiry_date) return false;
     return new Date(item.expiry_date) < new Date();
   });
+
+  const firstName = user?.name?.split(' ')[0] || '';
 
   if (loading) {
     return (
@@ -41,123 +50,127 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-6">
+      {/* Greeting */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
-        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">{t('dashboard.welcome')}</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+          {t('dashboard.greeting', { name: firstName })} 👋
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.welcome')}</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          title={t('dashboard.totalItems')}
-          value={foodItems.length}
-          description={t('dashboard.inYourKitchen')}
-          color="emerald"
-          href="/kitchen"
-        />
-        <StatCard
-          title={t('dashboard.expiringSoon')}
-          value={expiringItems.length}
-          description={t('dashboard.within3days')}
-          color="amber"
-          href="/kitchen"
-        />
-        <StatCard
-          title={t('dashboard.recipes')}
-          value={recipes.length}
-          description={t('dashboard.savedRecipes')}
-          color="blue"
-          href="/recipes"
-        />
-      </div>
-
-      {/* Alerts */}
+      {/* Expired items alert */}
       {expiredItems.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4">
-          <h3 className="font-semibold text-red-800 dark:text-red-400 mb-2">{t('dashboard.expiredItems')}</h3>
-          <ul className="space-y-1">
-            {expiredItems.map((item) => (
-              <li key={item.id} className="text-sm text-red-700 dark:text-red-300">
-                {item.name} — {t('dashboard.expired')} {new Date(item.expiry_date!).toLocaleDateString()}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Link to="/kitchen" className="block bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">⚠️</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-red-800 dark:text-red-400 text-sm">{expiredItems.length} {t('dashboard.expiredItems')}</h3>
+              <p className="text-xs text-red-600 dark:text-red-400/70 mt-0.5 truncate">
+                {expiredItems.slice(0, 3).map((i) => i.name).join(', ')}{expiredItems.length > 3 ? ` +${expiredItems.length - 3}` : ''}
+              </p>
+            </div>
+            <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </Link>
       )}
 
-      {expiringItems.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4">
-          <h3 className="font-semibold text-amber-800 dark:text-amber-400 mb-2">{t('dashboard.expiringSoon')}</h3>
-          <ul className="space-y-1">
-            {expiringItems.map((item) => (
-              <li key={item.id} className="text-sm text-amber-700 dark:text-amber-300">
-                {item.name} — expires {new Date(item.expiry_date!).toLocaleDateString()}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Link to="/kitchen" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
+          <div className="flex items-center justify-between">
+            <span className="text-2xl">🏠</span>
+            {expiredItems.length > 0 && (
+              <span className="w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{expiredItems.length}</span>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{foodItems.length}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.inYourKitchen')}</p>
+        </Link>
+
+        <Link to="/recipes" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
+          <span className="text-2xl">📖</span>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">{recipes.length}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.savedRecipes')}</p>
+        </Link>
+
+        <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
+          <span className="text-2xl">🛒</span>
+          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+            {spending ? spending.grocery_total.toFixed(0) : '—'}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.groceryThisMonth')}</p>
+        </Link>
+
+        <Link to="/spending" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
+          <span className="text-2xl">🍽️</span>
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-2">
+            {spending ? spending.eating_out_total.toFixed(0) : '—'}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.eatingOutThisMonth')}</p>
+        </Link>
+      </div>
+
+      {/* Monthly spending bar */}
+      {spending && spending.total > 0 && (
+        <Link to="/spending" className="block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('dashboard.monthlySpending')}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{spending.total.toFixed(2)} {spending.currency}</p>
+          </div>
+          <div className="flex rounded-full overflow-hidden h-3">
+            <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${Math.round((spending.grocery_total / spending.total) * 100)}%` }} />
+            <div className="bg-orange-400 dark:bg-orange-500 flex-1" />
+          </div>
+          <div className="flex justify-between mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" />
+              {t('spending.groceries')} {spending.grocery_total.toFixed(0)}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" />
+              {t('spending.eatingOut')} {spending.eating_out_total.toFixed(0)}
+            </span>
+          </div>
+        </Link>
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <QuickAction
-          title={t('dashboard.manageKitchen')}
-          description={t('dashboard.manageKitchenDesc')}
-          href="/kitchen"
-          icon="M4 7h16M4 7V5a1 1 0 011-1h14a1 1 0 011 1v2M4 7l1 12a2 2 0 002 2h10a2 2 0 002-2l1-12"
-          color="emerald"
-        />
-        <QuickAction
-          title={t('dashboard.groceryTrips')}
-          description={t('dashboard.groceryTripsDesc')}
-          href="/spending"
-          icon="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"
-          color="purple"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link
+          to="/kitchen"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow flex items-center gap-3 active:scale-[0.98]"
+        >
+          <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 7V5a1 1 0 011-1h14a1 1 0 011 1v2M4 7l1 12a2 2 0 002 2h10a2 2 0 002-2l1-12" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{t('dashboard.manageKitchen')}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('dashboard.manageKitchenDesc')}</p>
+          </div>
+        </Link>
+
+        <Link
+          to="/spending"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow flex items-center gap-3 active:scale-[0.98]"
+        >
+          <div className="w-10 h-10 bg-purple-100 dark:bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{t('dashboard.groceryTrips')}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('dashboard.groceryTripsDesc')}</p>
+          </div>
+        </Link>
       </div>
     </div>
-  );
-}
-
-function StatCard({
-  title, value, description, color, href,
-}: {
-  title: string; value: number; description: string; color: string; href: string;
-}) {
-  const colors: Record<string, string> = {
-    emerald: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20',
-    amber: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-500/20',
-    blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-500/20',
-  };
-  return (
-    <Link to={href} className={`rounded-xl border p-4 sm:p-5 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 transition-shadow active:scale-[0.98] ${colors[color]}`}>
-      <p className="text-sm font-medium opacity-75">{title}</p>
-      <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
-      <p className="text-sm opacity-75 mt-1">{description}</p>
-    </Link>
-  );
-}
-
-function QuickAction({ title, description, href, icon, color }: { title: string; description: string; href: string; icon: string; color: string }) {
-  const iconColors: Record<string, string> = {
-    emerald: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-    purple: 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  };
-  return (
-    <Link
-      to={href}
-      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 transition-shadow flex items-start gap-3 sm:gap-4 active:scale-[0.98]"
-    >
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconColors[color]}`}>
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
-        </svg>
-      </div>
-      <div>
-        <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
-      </div>
-    </Link>
   );
 }

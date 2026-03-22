@@ -17,6 +17,7 @@ class SpendingSummary(BaseModel):
     period_end: date
     grocery_total: float
     eating_out_total: float
+    subscription_total: float = 0.0
     total: float
     currency: str
     weekly_breakdown: List[WeeklyBreakdown]

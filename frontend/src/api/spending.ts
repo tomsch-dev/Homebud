@@ -34,6 +34,7 @@ export interface SpendingSummary {
   period_end: string;
   grocery_total: number;
   eating_out_total: number;
+  subscription_total: number;
   total: number;
   currency: string;
   weekly_breakdown: WeeklyBreakdown[];
