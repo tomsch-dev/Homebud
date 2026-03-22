@@ -456,13 +456,11 @@ export default function Spending() {
                   <p className="text-2xl font-bold text-orange-800 dark:text-orange-300 mt-1">{summary.eating_out_total.toFixed(2)}</p>
                   <p className="text-xs text-orange-600 dark:text-orange-400">{eatingPct}%</p>
                 </div>
-                {summary.subscription_total > 0 && (
-                  <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
-                    <p className="text-xs text-violet-700 dark:text-violet-400">{t('subscriptions.title')}</p>
-                    <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{summary.subscription_total.toFixed(2)}</p>
-                    <p className="text-xs text-violet-600 dark:text-violet-400">{subPct}%</p>
-                  </div>
-                )}
+                <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
+                  <p className="text-xs text-violet-700 dark:text-violet-400">{t('subscriptions.title')}</p>
+                  <p className="text-2xl font-bold text-violet-800 dark:text-violet-300 mt-1">{summary.subscription_total.toFixed(2)}</p>
+                  <p className="text-xs text-violet-600 dark:text-violet-400">{subPct}%</p>
+                </div>
               </div>
 
               {summary.total > 0 && (

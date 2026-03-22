@@ -88,7 +88,7 @@ export default function Dashboard() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Link to="/kitchen" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <div className="flex items-center justify-between">
             <span className="text-2xl">🏠</span>
@@ -121,20 +121,20 @@ export default function Dashboard() {
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.eatingOutThisMonth')}</p>
         </Link>
-      </div>
 
-      {/* Subscription cost card */}
-      {monthlySubCost > 0 && (
-        <Link to="/spending" className="block bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+        <Link to="/spending" className="col-span-2 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🔄</span>
-              <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('dashboard.subscriptions')}</p>
+            <div>
+              <span className="text-2xl">🔄</span>
+              <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">{t('dashboard.subscriptions')}</p>
             </div>
-            <p className="text-lg font-bold text-violet-800 dark:text-violet-300">{monthlySubCost.toFixed(2)} {userCurrency}<span className="text-xs font-normal text-violet-500 dark:text-violet-400">/{t('subscriptions.cycle_monthly').toLowerCase()}</span></p>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-violet-800 dark:text-violet-300">{monthlySubCost.toFixed(2)} {userCurrency}</p>
+              <p className="text-xs text-violet-500 dark:text-violet-400">/{t('subscriptions.cycle_monthly').toLowerCase()}</p>
+            </div>
           </div>
         </Link>
-      )}
+      </div>
 
       {/* Monthly spending bar */}
       {spending && spending.total > 0 && (
