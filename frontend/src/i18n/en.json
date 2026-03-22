@@ -143,6 +143,8 @@
     "selectIngredients": "Select ingredients to use",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
+    "filterIngredients": "Filter ingredients...",
+    "expiringSoon": "Use these first — expiring soon",
     "selectedCount": "{{count}} of {{total}} selected",
     "emptyKitchen": "Your kitchen is empty",
     "emptyKitchenHint": "Add some items to your kitchen first, then come back for recipe ideas."

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { recipesApi, Recipe, RecipeSuggestion, CreateRecipe } from '../api/recipes';
@@ -6,6 +6,13 @@ import { foodItemsApi, FoodItem } from '../api/foodItems';
 import RecipeFormModal from '../components/RecipeFormModal';
 import { useToast } from '../components/Toast';
 import { useUser } from '../hooks/useUser';
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  dairy: '🥛', meat: '🥩', seafood: '🐟', vegetables: '🥬', fruits: '🍎',
+  grains: '🌾', beverages: '🥤', condiments: '🧂', snacks: '🍿', frozen: '🧊', other: '📦',
+};
+
+const CATEGORY_ORDER = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'grains', 'condiments', 'beverages', 'snacks', 'frozen', 'other'];
 
 type Tab = 'recipes' | 'ai' | 'discover';
 
@@ -36,6 +43,7 @@ export default function Recipes() {
   const [aiLoading, setAiLoading] = useState(false);
   const [savedIdx, setSavedIdx] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [ingredientFilter, setIngredientFilter] = useState('');
 
   const load = () => {
     Promise.all([recipesApi.getAll(), foodItemsApi.getAll()])
@@ -114,6 +122,25 @@ export default function Recipes() {
     soon.setDate(soon.getDate() + 3);
     return new Date(item.expiry_date) <= soon;
   };
+
+  const expiringItems = useMemo(() => foodItems.filter(isExpiringSoon), [foodItems]);
+
+  const filteredItems = useMemo(() => {
+    if (!ingredientFilter.trim()) return foodItems;
+    const q = ingredientFilter.toLowerCase();
+    return foodItems.filter((i) => i.name.toLowerCase().includes(q));
+  }, [foodItems, ingredientFilter]);
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, FoodItem[]> = {};
+    for (const item of filteredItems) {
+      const cat = item.category || 'other';
+      (groups[cat] ??= []).push(item);
+    }
+    return CATEGORY_ORDER
+      .filter((cat) => groups[cat]?.length)
+      .map((cat) => ({ category: cat, items: groups[cat] }));
+  }, [filteredItems]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" /></div>;
@@ -238,38 +265,100 @@ export default function Recipes() {
             <>
               {/* Ingredient selection */}
               {foodItems.length > 0 && (
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{t('aiChef.selectIngredients')}</h2>
-                    <button onClick={toggleAll} className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 space-y-3">
+                  {/* Header with search */}
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">{t('aiChef.selectIngredients')}</h2>
+                    <button onClick={toggleAll} className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium whitespace-nowrap">
                       {selectedIds.size === foodItems.length ? t('aiChef.deselectAll') : t('aiChef.selectAll')}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {foodItems.map((item) => {
-                      const selected = selectedIds.has(item.id);
-                      const expiring = isExpiringSoon(item);
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => toggleItem(item.id)}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
-                            selected
-                              ? expiring
-                                ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400'
-                                : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400'
-                              : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500'
-                          }`}
-                        >
-                          {selected && <span className="mr-1">&#10003;</span>}
-                          {expiring && <span className="mr-0.5">&#9888;</span>}
-                          {item.name}
-                          <span className="ml-1 text-xs opacity-60">{item.quantity} {t(`units.${item.unit}`, item.unit)}</span>
-                        </button>
-                      );
-                    })}
+
+                  {/* Search filter */}
+                  {foodItems.length > 6 && (
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                      </svg>
+                      <input
+                        type="text"
+                        value={ingredientFilter}
+                        onChange={(e) => setIngredientFilter(e.target.value)}
+                        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                        placeholder={t('aiChef.filterIngredients')}
+                      />
+                    </div>
+                  )}
+
+                  {/* Expiring soon section */}
+                  {expiringItems.length > 0 && !ingredientFilter && (
+                    <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2 flex items-center gap-1">
+                        <span>⚠️</span> {t('aiChef.expiringSoon')}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {expiringItems.map((item) => {
+                          const selected = selectedIds.has(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => toggleItem(item.id)}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                selected
+                                  ? 'bg-amber-100 dark:bg-amber-500/20 border-amber-400 dark:border-amber-500/40 text-amber-800 dark:text-amber-300'
+                                  : 'bg-white dark:bg-gray-800 border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400/70'
+                              }`}
+                            >
+                              {selected && <span className="mr-1">✓</span>}
+                              {item.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grouped by category */}
+                  <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+                    {groupedItems.map(({ category, items: catItems }) => (
+                      <div key={category}>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="text-sm">{CATEGORY_EMOJI[category] || CATEGORY_EMOJI.other}</span>
+                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t(`categories.${category}`)}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-gray-600">({catItems.length})</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {catItems.map((item) => {
+                            const selected = selectedIds.has(item.id);
+                            const expiring = isExpiringSoon(item);
+                            return (
+                              <button
+                                key={item.id}
+                                onClick={() => toggleItem(item.id)}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                                  selected
+                                    ? expiring
+                                      ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400'
+                                      : 'bg-purple-50 dark:bg-purple-500/10 border-purple-300 dark:border-purple-500/30 text-purple-700 dark:text-purple-400'
+                                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                                }`}
+                              >
+                                {selected ? <span className="mr-1">✓</span> : <span className="mr-1 opacity-0 w-0 inline-block">✓</span>}
+                                {item.name}
+                                <span className="ml-1 opacity-50">{item.quantity}{t(`units.${item.unit}`, item.unit)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    {groupedItems.length === 0 && ingredientFilter && (
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">{t('common.noResults')}</p>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between pt-1">
+
+                  {/* Footer with count + generate button */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                     <p className="text-xs text-gray-400 dark:text-gray-500">
                       {t('aiChef.selectedCount', { count: selectedIds.size, total: foodItems.length })}
                     </p>

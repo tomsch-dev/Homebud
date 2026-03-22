@@ -143,6 +143,8 @@
     "selectIngredients": "Zutaten auswählen",
     "selectAll": "Alle auswählen",
     "deselectAll": "Alle abwählen",
+    "filterIngredients": "Zutaten filtern...",
+    "expiringSoon": "Zuerst verwenden — läuft bald ab",
     "selectedCount": "{{count}} von {{total}} ausgewählt",
     "emptyKitchen": "Deine Küche ist leer",
     "emptyKitchenHint": "Füge zuerst Lebensmittel zu deiner Küche hinzu, dann komm zurück für Rezeptideen."
