@@ -38,7 +38,12 @@
     "manageKitchen": "Manage Kitchen",
     "manageKitchenDesc": "Add, edit, or remove food items and view nutrition data",
     "groceryTrips": "Grocery Trips",
-    "groceryTripsDesc": "Log shopping trips and scan receipts to track spending"
+    "groceryTripsDesc": "Log shopping trips and scan receipts to track spending",
+    "quickActions": "Quick Actions",
+    "scanBarcode": "Scan Barcode",
+    "shoppingList": "Shopping List",
+    "addItem": "Add Item",
+    "logTrip": "Log Trip"
   },
   "kitchen": {
     "title": "My Kitchen",
@@ -148,7 +153,9 @@
     "expiringSoon": "Use these first — expiring soon",
     "selectedCount": "{{count}} of {{total}} selected",
     "emptyKitchen": "Your kitchen is empty",
-    "emptyKitchenHint": "Add some items to your kitchen first, then come back for recipe ideas."
+    "emptyKitchenHint": "Add some items to your kitchen first, then come back for recipe ideas.",
+    "dailyLimit": "Daily limit reached ({{used}}/{{max}}). Try again tomorrow.",
+    "requestsLeft": "{{count}} requests left today"
   },
   "grocery": {
     "title": "Grocery Trips",

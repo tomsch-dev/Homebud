@@ -38,7 +38,12 @@
     "manageKitchen": "Küche verwalten",
     "manageKitchenDesc": "Lebensmittel hinzufügen, bearbeiten oder entfernen und Nährwerte ansehen",
     "groceryTrips": "Einkäufe",
-    "groceryTripsDesc": "Einkäufe erfassen und Kassenbon scannen"
+    "groceryTripsDesc": "Einkäufe erfassen und Kassenbon scannen",
+    "quickActions": "Schnellzugriff",
+    "scanBarcode": "Barcode scannen",
+    "shoppingList": "Einkaufsliste",
+    "addItem": "Artikel hinzufügen",
+    "logTrip": "Einkauf erfassen"
   },
   "kitchen": {
     "title": "Meine Küche",
@@ -148,7 +153,9 @@
     "expiringSoon": "Zuerst verwenden — läuft bald ab",
     "selectedCount": "{{count}} von {{total}} ausgewählt",
     "emptyKitchen": "Deine Küche ist leer",
-    "emptyKitchenHint": "Füge zuerst Lebensmittel zu deiner Küche hinzu, dann komm zurück für Rezeptideen."
+    "emptyKitchenHint": "Füge zuerst Lebensmittel zu deiner Küche hinzu, dann komm zurück für Rezeptideen.",
+    "dailyLimit": "Tageslimit erreicht ({{used}}/{{max}}). Versuche es morgen erneut.",
+    "requestsLeft": "{{count}} Anfragen heute übrig"
   },
   "grocery": {
     "title": "Einkäufe",

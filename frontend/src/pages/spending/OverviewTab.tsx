@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { spendingApi, SpendingSummary } from '../../api/spending';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { fmtCurrency, fmtDate } from '../../utils/currency';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -175,85 +175,24 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
             </div>
           )}
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-              <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.spendingBreakdown')}</h2>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: t('spending.groceries'), value: summary.grocery_total },
-                        { name: t('spending.eatingOut'), value: summary.eating_out_total },
-                        ...(summary.subscription_total > 0 ? [{ name: t('subscriptions.title'), value: summary.subscription_total }] : []),
-                      ].filter(d => d.value > 0)}
-                      cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value"
-                    >
-                      <Cell fill="#34d399" />
-                      <Cell fill="#fb923c" />
-                      {summary.subscription_total > 0 && <Cell fill="#a78bfa" />}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {summary.weekly_breakdown.length > 0 && (
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-                <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.weeklyChart')}</h2>
-                <div className="h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={summary.weekly_breakdown.map(w => ({
-                      week: fmtDate(w.week_start, lang, { month: 'short', day: 'numeric' }),
-                      [t('spending.groceries')]: w.grocery_total,
-                      [t('spending.eatingOut')]: w.eating_out_total,
-                    }))} barCategoryGap="30%" maxBarSize={40}>
-                      <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} width={45} />
-                      <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                      <Bar dataKey={t('spending.groceries')} stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
-                      <Bar dataKey={t('spending.eatingOut')} stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </div>
-
+          {/* Weekly bar chart */}
           {summary.weekly_breakdown.length > 0 && (
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-              <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.weeklyBreakdown')}</h2>
-              <div className="space-y-2">
-                {summary.weekly_breakdown.map((week) => (
-                  <div key={week.week_start} className="text-sm">
-                    <div className="flex items-center justify-between mb-1 sm:mb-0">
-                      <span className="text-gray-500 dark:text-gray-400 text-xs">
-                        {fmtDate(week.week_start, lang, { month: 'short', day: 'numeric' })} – {fmtDate(week.week_end, lang, { month: 'short', day: 'numeric' })}
-                      </span>
-                      <span className="font-semibold text-gray-800 dark:text-gray-200 text-right sm:hidden">{fmtCurrency(week.total, week.currency)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <div className="flex-1 flex gap-1 h-5">
-                        {week.grocery_total > 0 && (
-                          <div className="bg-emerald-200 dark:bg-emerald-500/30 rounded-sm flex items-center px-1 text-xs text-emerald-800 dark:text-emerald-300 whitespace-nowrap"
-                            style={{ width: `${(week.grocery_total / summary.total) * 100}%`, minWidth: '2rem' }}>
-                            {fmtCurrency(week.grocery_total, week.currency, 0)}
-                          </div>
-                        )}
-                        {week.eating_out_total > 0 && (
-                          <div className="bg-orange-200 dark:bg-orange-500/30 rounded-sm flex items-center px-1 text-xs text-orange-800 dark:text-orange-300 whitespace-nowrap"
-                            style={{ width: `${(week.eating_out_total / summary.total) * 100}%`, minWidth: '2rem' }}>
-                            {fmtCurrency(week.eating_out_total, week.currency, 0)}
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-semibold text-gray-800 dark:text-gray-200 w-20 text-right hidden sm:block">{fmtCurrency(week.total, week.currency)}</span>
-                    </div>
-                  </div>
-                ))}
+              <h2 className="font-semibold text-gray-900 dark:text-white mb-3">{t('spending.weeklyChart')}</h2>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={summary.weekly_breakdown.map(w => ({
+                    week: fmtDate(w.week_start, lang, { month: 'short', day: 'numeric' }),
+                    [t('spending.groceries')]: w.grocery_total,
+                    [t('spending.eatingOut')]: w.eating_out_total,
+                  }))} barCategoryGap="30%" maxBarSize={40}>
+                    <XAxis dataKey="week" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} width={45} />
+                    <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+                    <Bar dataKey={t('spending.groceries')} stackId="a" fill="#34d399" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey={t('spending.eatingOut')} stackId="a" fill="#fb923c" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}

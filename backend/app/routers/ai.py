@@ -5,6 +5,8 @@ based on what's in the user's kitchen.
 
 import json
 import logging
+from collections import defaultdict
+from datetime import datetime, date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -12,12 +14,53 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.middleware.auth import require_premium
+from app.middleware.auth import get_current_user_id
 from app.models.food_item import FoodItem
+from app.models.user import User, Role, UserRole
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
+
+# In-memory rate limiter: {user_id: [datetime, ...]}
+_rate_limit_store: dict[str, list[datetime]] = defaultdict(list)
+FREE_TIER_DAILY_LIMIT = 10
+
+
+def _is_premium(user_id: str, db: Session) -> bool:
+    """Check whether the user holds a 'premium' role."""
+    return (
+        db.query(UserRole)
+        .join(Role, Role.id == UserRole.role_id)
+        .filter(UserRole.user_id == user_id, Role.name == "premium")
+        .first()
+        is not None
+    )
+
+
+def _check_rate_limit(user_id: str) -> None:
+    """Raise HTTP 429 if a non-premium user exceeded the daily request limit."""
+    now = datetime.utcnow()
+    today_start = datetime.combine(now.date(), datetime.min.time())
+
+    # Prune timestamps older than today
+    _rate_limit_store[user_id] = [
+        ts for ts in _rate_limit_store[user_id] if ts >= today_start
+    ]
+
+    if len(_rate_limit_store[user_id]) >= FREE_TIER_DAILY_LIMIT:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Daily AI Chef limit reached ({FREE_TIER_DAILY_LIMIT} requests per day). "
+                "Upgrade to Premium for unlimited access."
+            ),
+        )
+
+
+def _record_request(user_id: str) -> None:
+    """Record a successful request timestamp for rate-limiting."""
+    _rate_limit_store[user_id].append(datetime.utcnow())
 
 
 class RecommendationsRequest(BaseModel):
@@ -87,8 +130,12 @@ Gib NUR gültiges JSON zurück:
 
 
 @router.post("/recommendations", response_model=RecommendationsResponse)
-def get_recommendations(body: RecommendationsRequest, lang: str = "en", db: Session = Depends(get_db), _user: str = Depends(require_premium)):
+def get_recommendations(body: RecommendationsRequest, lang: str = "en", db: Session = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     """Get AI recipe recommendations based on selected kitchen contents."""
+    # Rate-limit non-premium users
+    if not _is_premium(user_id, db):
+        _check_rate_limit(user_id)
+
     if not settings.openai_api_key:
         raise HTTPException(status_code=503, detail="OpenAI API key not configured")
 
@@ -99,7 +146,6 @@ def get_recommendations(body: RecommendationsRequest, lang: str = "en", db: Sess
     if not items:
         raise HTTPException(status_code=400, detail="No items in kitchen")
 
-    from datetime import date, timedelta
     soon = date.today() + timedelta(days=3)
 
     ingredients_list = []
@@ -141,6 +187,11 @@ def get_recommendations(body: RecommendationsRequest, lang: str = "en", db: Sess
                 content = content[:-3]
 
         parsed = json.loads(content.strip())
+
+        # Record successful request for rate limiting (non-premium users)
+        if not _is_premium(user_id, db):
+            _record_request(user_id)
+
         return RecommendationsResponse(**parsed)
 
     except httpx.HTTPStatusError as e:

@@ -8,7 +8,6 @@ import { fmtCurrency, fmtDate } from '../utils/currency';
 import { SkeletonItem } from '../components/Skeleton';
 
 const BarcodeScanner = lazy(() => import('../components/BarcodeScanner'));
-const ShoppingList = lazy(() => import('../components/ShoppingList'));
 
 const CATEGORY_EMOJI: Record<string, string> = {
   dairy: '🥛',
@@ -61,7 +60,6 @@ export default function Kitchen() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<FoodItem | undefined>();
   const [showScanner, setShowScanner] = useState(false);
-  const [showShoppingList, setShowShoppingList] = useState(false);
   const [barcodePrefill, setBarcodePrefill] = useState<Partial<CreateFoodItem> | undefined>();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -178,15 +176,6 @@ export default function Kitchen() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowShoppingList(true)}
-            className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold min-h-[44px]"
-            title={t('shoppingList.title')}
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </button>
           <button
             onClick={() => setShowScanner(true)}
             className="px-3 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold min-h-[44px]"
@@ -475,12 +464,6 @@ export default function Kitchen() {
       {showScanner && (
         <Suspense fallback={null}>
           <BarcodeScanner onResult={handleBarcodeResult} onClose={() => setShowScanner(false)} />
-        </Suspense>
-      )}
-
-      {showShoppingList && (
-        <Suspense fallback={null}>
-          <ShoppingList onClose={() => setShowShoppingList(false)} />
         </Suspense>
       )}
 

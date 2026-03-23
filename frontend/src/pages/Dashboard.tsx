@@ -65,26 +65,6 @@ export default function Dashboard() {
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('dashboard.welcome')}</p>
       </div>
 
-      {/* Expired items alert */}
-      {expiredItems.length > 0 && (
-        <Link to="/kitchen" className="block bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-lg">⚠️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-red-800 dark:text-red-400 text-sm">{expiredItems.length} {t('dashboard.expiredItems')}</h3>
-              <p className="text-xs text-red-600 dark:text-red-400/70 mt-0.5 truncate">
-                {expiredItems.slice(0, 3).map((i) => i.name).join(', ')}{expiredItems.length > 3 ? ` +${expiredItems.length - 3}` : ''}
-              </p>
-            </div>
-            <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </Link>
-      )}
-
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3">
         <Link to="/kitchen" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md transition-shadow active:scale-[0.98]">
@@ -132,6 +112,42 @@ export default function Dashboard() {
             </div>
           </div>
         </Link>
+      </div>
+
+      {/* Quick action pills */}
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('dashboard.quickActions')}</h2>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <Link
+            to="/kitchen"
+            state={{ openScanner: true }}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            <span className="text-base">📷</span>
+            {t('dashboard.scanBarcode')}
+          </Link>
+          <Link
+            to="/shopping-list"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            <span className="text-base">📝</span>
+            {t('dashboard.shoppingList')}
+          </Link>
+          <Link
+            to="/kitchen"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            <span className="text-base">➕</span>
+            {t('dashboard.addItem')}
+          </Link>
+          <Link
+            to="/spending"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            <span className="text-base">🛒</span>
+            {t('dashboard.logTrip')}
+          </Link>
+        </div>
       </div>
 
       {/* Monthly spending bar */}
