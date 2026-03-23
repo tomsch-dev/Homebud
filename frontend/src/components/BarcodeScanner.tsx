@@ -118,16 +118,45 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     }
   }, [torchOn]);
 
+  // Crop the center scan region from the video for better small-barcode detection.
+  // Returns a canvas containing just the area inside the scan overlay (80% wide, 35% tall).
+  const cropScanRegion = useCallback((): HTMLCanvasElement | null => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return null;
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    // Match the overlay dimensions: 80% width, 35% height, centered
+    const cropW = Math.round(vw * 0.8);
+    const cropH = Math.round(vh * 0.35);
+    const cropX = Math.round((vw - cropW) / 2);
+    const cropY = Math.round((vh - cropH) / 2);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = cropW;
+    canvas.height = cropH;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    return canvas;
+  }, []);
+
   // Native BarcodeDetector — fast, hardware-accelerated
   const startNativeDetection = useCallback(() => {
     const detector = new (window as any).BarcodeDetector({
       formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39'],
     });
 
+    let useFullFrame = false; // alternate between cropped and full frame
+
     const detect = async () => {
       if (!scanningRef.current || !videoRef.current) return;
       try {
-        const barcodes = await detector.detect(videoRef.current);
+        // Try cropped scan region first (better for small barcodes),
+        // alternate with full frame (catches barcodes outside the overlay)
+        const source = !useFullFrame ? (cropScanRegion() ?? videoRef.current) : videoRef.current;
+        useFullFrame = !useFullFrame;
+
+        const barcodes = await detector.detect(source);
         if (barcodes.length > 0 && scanningRef.current) {
           handleBarcode(barcodes[0].rawValue);
           return;
@@ -138,7 +167,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       }
     };
     requestAnimationFrame(detect);
-  }, [handleBarcode]);
+  }, [handleBarcode, cropScanRegion]);
 
   // Fallback: html5-qrcode (loaded lazily only if needed)
   const startFallbackDetection = useCallback(async () => {
@@ -156,18 +185,26 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       ];
       const scanner = new Html5Qrcode('barcode-fallback-region', { formatsToSupport: formats, verbose: false });
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
+      let useFullFrame = false;
 
       const scanLoop = async () => {
         if (!scanningRef.current || !videoRef.current) return;
-        const video = videoRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
+
+        // Alternate between cropped scan region and full frame
+        const canvas = !useFullFrame ? cropScanRegion() : null;
+        useFullFrame = !useFullFrame;
+
+        const src = canvas ?? (() => {
+          const c = document.createElement('canvas');
+          const video = videoRef.current!;
+          c.width = video.videoWidth;
+          c.height = video.videoHeight;
+          c.getContext('2d')!.drawImage(video, 0, 0);
+          return c;
+        })();
 
         try {
-          const blob: Blob = await new Promise((res) => canvas.toBlob((b) => res(b!), 'image/jpeg', 0.9));
+          const blob: Blob = await new Promise((res) => src.toBlob((b) => res(b!), 'image/jpeg', 0.9));
           const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
           const result = await scanner.scanFileV2(file, false);
           if (result && scanningRef.current) {
@@ -185,7 +222,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     } catch {
       // html5-qrcode failed to load
     }
-  }, [handleBarcode]);
+  }, [handleBarcode, cropScanRegion]);
 
   useEffect(() => {
     startCamera();
