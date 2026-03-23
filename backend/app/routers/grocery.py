@@ -7,6 +7,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_id
 from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.schemas.grocery import GroceryTripCreate, GroceryTripUpdate, GroceryTripOut
+from app.utils.household import get_visible_user_ids
 
 router = APIRouter(prefix="/grocery-trips", tags=["grocery"])
 
@@ -24,9 +25,10 @@ def list_trips(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
+    user_ids = get_visible_user_ids(user_id, "share_grocery_trips", db)
     return (
         db.query(GroceryTrip)
-        .filter(GroceryTrip.user_id == user_id)
+        .filter(GroceryTrip.user_id.in_(user_ids))
         .order_by(GroceryTrip.trip_date.desc())
         .all()
     )

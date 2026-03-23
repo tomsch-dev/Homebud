@@ -313,14 +313,19 @@
     "subtitle": "Benutzer, Rollen und Zugriff verwalten",
     "totalUsers": "Benutzer gesamt",
     "premiumUsers": "Premium",
-    "suspendedUsers": "Gesperrt",
     "allUsers": "Alle Benutzer",
     "noUsers": "Noch keine Benutzer",
     "grantPremium": "Premium geben",
     "revokePremium": "Premium entziehen",
-    "suspend": "Sperren",
-    "unsuspend": "Entsperren",
-    "suspended": "GESPERRT"
+    "editUser": "Benutzer bearbeiten",
+    "deleteUser": "Benutzer löschen",
+    "deleteConfirm": "Benutzer löschen?",
+    "deleteConfirmText": "Dies löscht {{name}} und alle zugehörigen Daten unwiderruflich.",
+    "editName": "Name",
+    "editEmail": "E-Mail",
+    "save": "Speichern",
+    "userDeleted": "Benutzer gelöscht",
+    "userUpdated": "Benutzer aktualisiert"
   },
   "profile": {
     "title": "Profil",

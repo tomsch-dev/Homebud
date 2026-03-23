@@ -13,6 +13,7 @@ from app.schemas.shopping_list import (
     ShoppingListItemCreate, ShoppingListItemUpdate,
     ShoppingListItemOut, SuggestionOut,
 )
+from app.utils.household import get_visible_user_ids
 
 router = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
 
@@ -22,9 +23,10 @@ def list_items(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
+    user_ids = get_visible_user_ids(user_id, "share_shopping_list", db)
     return (
         db.query(ShoppingListItem)
-        .filter(ShoppingListItem.user_id == user_id)
+        .filter(ShoppingListItem.user_id.in_(user_ids))
         .order_by(ShoppingListItem.checked, ShoppingListItem.created_at.desc())
         .all()
     )
@@ -95,10 +97,11 @@ def get_suggestions(
     user_id: str = Depends(get_current_user_id),
 ):
     """Suggest items based on grocery trip history frequency."""
-    # Get trip IDs belonging to this user
+    # Get trip IDs belonging to visible users (self + household if shared)
+    visible_user_ids = get_visible_user_ids(user_id, "share_shopping_list", db)
     user_trip_ids = (
         db.query(GroceryTrip.id)
-        .filter(GroceryTrip.user_id == user_id)
+        .filter(GroceryTrip.user_id.in_(visible_user_ids))
         .subquery()
     )
 

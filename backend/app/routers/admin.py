@@ -7,7 +7,7 @@ from app.database import get_db
 from app.config import settings
 from app.middleware.auth import require_admin, get_m2m_token
 from app.models.user import User, Role, UserRole
-from app.schemas.admin import AdminUserOut, RoleToggleRequest, SuspendRequest
+from app.schemas.admin import AdminUserOut, RoleToggleRequest, SuspendRequest, AdminUserUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -123,3 +123,60 @@ async def toggle_user_suspension(
         roles=[ur.role.name for ur in user.user_roles],
         is_suspended=user.is_suspended,
     )
+
+
+@router.patch("/users/{user_id}", response_model=AdminUserOut)
+async def update_user(
+    user_id: str,
+    body: AdminUserUpdate,
+    _admin_id: str = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
+    return AdminUserOut(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        avatar=user.avatar,
+        created_at=user.created_at,
+        roles=[ur.role.name for ur in user.user_roles],
+        is_suspended=user.is_suspended,
+    )
+
+
+@router.delete("/users/{user_id}", status_code=204)
+async def delete_user(
+    user_id: str,
+    _admin_id: str = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Prevent deleting yourself
+    if user_id == _admin_id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    # Delete all user data
+    from app.models.grocery import GroceryTrip
+    from app.models.eating_out import EatingOutExpense
+    from app.models.subscription import Subscription
+    from app.models.recipe import Recipe
+    from app.models.shopping_list import ShoppingListItem
+    from app.models.food_item import FoodItem
+
+    db.query(GroceryTrip).filter(GroceryTrip.user_id == user_id).delete()
+    db.query(EatingOutExpense).filter(EatingOutExpense.user_id == user_id).delete()
+    db.query(Subscription).filter(Subscription.user_id == user_id).delete()
+    db.query(Recipe).filter(Recipe.user_id == user_id).delete()
+    db.query(ShoppingListItem).filter(ShoppingListItem.user_id == user_id).delete()
+    # Food items via household or direct
+    db.query(FoodItem).filter(FoodItem.household_id.is_(None)).delete()  # orphaned items
+    # The user model has cascade delete on user_roles and household_members
+    db.delete(user)
+    db.commit()

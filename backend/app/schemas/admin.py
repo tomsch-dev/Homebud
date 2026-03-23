@@ -21,3 +21,8 @@ class RoleToggleRequest(BaseModel):
 
 class SuspendRequest(BaseModel):
     suspended: bool
+
+
+class AdminUserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None

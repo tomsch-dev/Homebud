@@ -8,7 +8,7 @@ from app.middleware.auth import get_current_user_id
 from app.models.household import Household, HouseholdMember
 from app.models.food_item import FoodItem
 from app.models.user import User
-from app.schemas.household import HouseholdCreate, HouseholdOut, HouseholdMemberOut, JoinHouseholdRequest
+from app.schemas.household import HouseholdCreate, HouseholdOut, HouseholdMemberOut, JoinHouseholdRequest, HouseholdSettingsUpdate
 
 router = APIRouter(prefix="/households", tags=["households"])
 
@@ -30,6 +30,12 @@ def _household_to_out(h: Household) -> HouseholdOut:
             )
             for m in h.members
         ],
+        share_food_items=h.share_food_items,
+        share_grocery_trips=h.share_grocery_trips,
+        share_eating_out=h.share_eating_out,
+        share_subscriptions=h.share_subscriptions,
+        share_recipes=h.share_recipes,
+        share_shopping_list=h.share_shopping_list,
     )
 
 
@@ -143,3 +149,21 @@ def regenerate_invite(
     db.commit()
     db.refresh(member.household)
     return _household_to_out(member.household)
+
+
+@router.patch("/settings", response_model=HouseholdOut)
+def update_household_settings(
+    data: HouseholdSettingsUpdate,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    member = db.query(HouseholdMember).filter(HouseholdMember.user_id == user_id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Not in a household")
+
+    household = member.household
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(household, field, value)
+    db.commit()
+    db.refresh(household)
+    return _household_to_out(household)

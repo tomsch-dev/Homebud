@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import String, DateTime, ForeignKey, func, UniqueConstraint
+from sqlalchemy import Boolean, String, DateTime, ForeignKey, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -15,6 +15,13 @@ class Household(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     invite_code: Mapped[str] = mapped_column(String(32), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    share_food_items: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    share_grocery_trips: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    share_eating_out: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    share_subscriptions: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    share_recipes: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    share_shopping_list: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
     members: Mapped[List["HouseholdMember"]] = relationship("HouseholdMember", back_populates="household", cascade="all, delete-orphan")
 

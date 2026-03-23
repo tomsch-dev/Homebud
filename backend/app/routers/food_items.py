@@ -8,7 +8,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_id
 from app.models.food_item import FoodItem
 from app.models.nutrition import Nutrition
-from app.models.household import HouseholdMember
+from app.models.household import Household, HouseholdMember
 from app.schemas.food_item import FoodItemCreate, FoodItemUpdate, FoodItemOut
 
 router = APIRouter(prefix="/food-items", tags=["food-items"])
@@ -48,6 +48,14 @@ def _sync_nutrition(db: Session, food_item_id: uuid.UUID, data: FoodItemCreate |
         db.add(nutrition)
 
 
+def _is_food_shared(household_id, db: Session) -> bool:
+    """Check if the household has food item sharing enabled."""
+    if not household_id:
+        return False
+    household = db.query(Household).filter(Household.id == household_id).first()
+    return household.share_food_items if household else False
+
+
 @router.get("/", response_model=List[FoodItemOut])
 def list_food_items(
     user_id: str = Depends(get_current_user_id),
@@ -55,7 +63,7 @@ def list_food_items(
 ):
     household_id = _get_household_id(user_id, db)
     query = db.query(FoodItem)
-    if household_id:
+    if household_id and _is_food_shared(household_id, db):
         query = query.filter(FoodItem.household_id == household_id)
     else:
         query = query.filter(FoodItem.household_id.is_(None))

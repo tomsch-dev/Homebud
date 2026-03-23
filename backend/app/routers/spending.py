@@ -9,6 +9,7 @@ from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.models.eating_out import EatingOutExpense
 from app.models.subscription import Subscription
 from app.schemas.spending import SpendingSummary, WeeklyBreakdown
+from app.utils.household import get_visible_user_ids
 
 CYCLE_MONTHLY_FACTOR = {
     "weekly": 52 / 12,
@@ -33,10 +34,11 @@ def spending_summary(
     user_id: str = Depends(get_current_user_id),
 ):
     # Grocery totals per trip in range
+    grocery_user_ids = get_visible_user_ids(user_id, "share_grocery_trips", db)
     trips = (
         db.query(GroceryTrip)
         .filter(
-            GroceryTrip.user_id == user_id,
+            GroceryTrip.user_id.in_(grocery_user_ids),
             GroceryTrip.trip_date >= start,
             GroceryTrip.trip_date <= end,
         )
@@ -45,10 +47,11 @@ def spending_summary(
     grocery_total = sum(t.total_amount for t in trips)
 
     # Eating out in range
+    eating_user_ids = get_visible_user_ids(user_id, "share_eating_out", db)
     eating = (
         db.query(EatingOutExpense)
         .filter(
-            EatingOutExpense.user_id == user_id,
+            EatingOutExpense.user_id.in_(eating_user_ids),
             EatingOutExpense.expense_date >= start,
             EatingOutExpense.expense_date <= end,
         )
@@ -96,9 +99,10 @@ def spending_summary(
     )[:5]
 
     # Active subscriptions — prorate monthly cost by number of months in range
+    sub_user_ids = get_visible_user_ids(user_id, "share_subscriptions", db)
     active_subs = (
         db.query(Subscription)
-        .filter(Subscription.user_id == user_id, Subscription.is_active == True)  # noqa: E712
+        .filter(Subscription.user_id.in_(sub_user_ids), Subscription.is_active == True)  # noqa: E712
         .all()
     )
     months_in_range = max(1, round((end - start).days / 30.44))

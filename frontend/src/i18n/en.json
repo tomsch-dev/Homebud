@@ -313,14 +313,19 @@
     "subtitle": "Manage users, roles, and access",
     "totalUsers": "Total Users",
     "premiumUsers": "Premium",
-    "suspendedUsers": "Suspended",
     "allUsers": "All Users",
     "noUsers": "No users yet",
     "grantPremium": "Grant Premium",
     "revokePremium": "Revoke Premium",
-    "suspend": "Suspend",
-    "unsuspend": "Unsuspend",
-    "suspended": "SUSPENDED"
+    "editUser": "Edit User",
+    "deleteUser": "Delete User",
+    "deleteConfirm": "Delete User?",
+    "deleteConfirmText": "This will permanently delete {{name}} and all their data. This cannot be undone.",
+    "editName": "Name",
+    "editEmail": "Email",
+    "save": "Save",
+    "userDeleted": "User deleted",
+    "userUpdated": "User updated"
   },
   "profile": {
     "title": "Profile",

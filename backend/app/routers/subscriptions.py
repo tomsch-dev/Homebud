@@ -7,6 +7,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_id
 from app.models.subscription import Subscription
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate, SubscriptionOut
+from app.utils.household import get_visible_user_ids
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
@@ -40,9 +41,10 @@ def list_subscriptions(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
+    user_ids = get_visible_user_ids(user_id, "share_subscriptions", db)
     subs = (
         db.query(Subscription)
-        .filter(Subscription.user_id == user_id)
+        .filter(Subscription.user_id.in_(user_ids))
         .order_by(Subscription.is_active.desc(), Subscription.name)
         .all()
     )

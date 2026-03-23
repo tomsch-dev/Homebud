@@ -7,6 +7,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_id
 from app.models.eating_out import EatingOutExpense
 from app.schemas.eating_out import EatingOutCreate, EatingOutUpdate, EatingOutOut
+from app.utils.household import get_visible_user_ids
 
 router = APIRouter(prefix="/eating-out", tags=["eating-out"])
 
@@ -16,9 +17,10 @@ def list_expenses(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
+    user_ids = get_visible_user_ids(user_id, "share_eating_out", db)
     return (
         db.query(EatingOutExpense)
-        .filter(EatingOutExpense.user_id == user_id)
+        .filter(EatingOutExpense.user_id.in_(user_ids))
         .order_by(EatingOutExpense.expense_date.desc())
         .all()
     )

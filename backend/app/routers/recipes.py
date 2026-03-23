@@ -7,6 +7,7 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_id
 from app.models.recipe import Recipe, RecipeIngredient, RecipeStep
 from app.schemas.recipe import RecipeCreate, RecipeUpdate, RecipeOut
+from app.utils.household import get_visible_user_ids
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 
@@ -27,9 +28,10 @@ def list_recipes(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
+    user_ids = get_visible_user_ids(user_id, "share_recipes", db)
     return (
         db.query(Recipe)
-        .filter(Recipe.user_id == user_id)
+        .filter(Recipe.user_id.in_(user_ids))
         .order_by(Recipe.created_at.desc())
         .all()
     )

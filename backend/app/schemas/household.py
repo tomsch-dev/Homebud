@@ -24,8 +24,23 @@ class HouseholdOut(BaseModel):
     invite_code: str
     created_at: datetime
     members: List[HouseholdMemberOut] = []
+    share_food_items: bool = True
+    share_grocery_trips: bool = False
+    share_eating_out: bool = False
+    share_subscriptions: bool = False
+    share_recipes: bool = False
+    share_shopping_list: bool = True
     model_config = {"from_attributes": True}
 
 
 class JoinHouseholdRequest(BaseModel):
     invite_code: str
+
+
+class HouseholdSettingsUpdate(BaseModel):
+    share_food_items: Optional[bool] = None
+    share_grocery_trips: Optional[bool] = None
+    share_eating_out: Optional[bool] = None
+    share_subscriptions: Optional[bool] = None
+    share_recipes: Optional[bool] = None
+    share_shopping_list: Optional[bool] = None
