@@ -390,16 +390,14 @@ export default function Kitchen() {
                             )}
                             <button
                               onClick={() => { setReduceId(reduceId === item.id ? null : item.id); setReduceAmount(1); }}
-                              className="p-2.5 text-gray-300 dark:text-gray-600 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                              className="p-2.5 text-orange-400 dark:text-orange-400 hover:text-orange-600 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                               title={t('kitchen.reduceQuantity')}
                             >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H6" />
-                              </svg>
+                              <span className="text-base">🍽️</span>
                             </button>
                             <button
                               onClick={() => { setEditItem(item); setShowModal(true); }}
-                              className="p-2.5 text-gray-300 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                              className="p-2.5 text-blue-400 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                               title={t('common.edit')}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -408,7 +406,7 @@ export default function Kitchen() {
                             </button>
                             <button
                               onClick={() => setDeleteTarget(item)}
-                              className="p-2.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                              className="p-2.5 text-red-400 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
                               title={t('common.delete')}
                             >
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

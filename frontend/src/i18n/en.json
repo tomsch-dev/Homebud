@@ -61,9 +61,9 @@
     "details": "details",
     "deleteConfirm": "Delete this food item?",
     "deleted": "Item deleted",
-    "reduceQuantity": "Remove some",
-    "removeAmount": "Remove",
-    "reduce": "Remove",
+    "reduceQuantity": "Use some",
+    "removeAmount": "Amount used",
+    "reduce": "Consume",
     "quantityReduced": "Quantity updated",
     "expiryShort": "Exp."
   },

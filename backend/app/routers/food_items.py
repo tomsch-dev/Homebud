@@ -66,7 +66,7 @@ def list_food_items(
     if household_id and _is_food_shared(household_id, db):
         query = query.filter(FoodItem.household_id == household_id)
     else:
-        query = query.filter(FoodItem.household_id.is_(None))
+        query = query.filter(FoodItem.user_id == user_id)
     return query.order_by(FoodItem.created_at.desc()).all()
 
 
@@ -77,8 +77,10 @@ def get_food_item(
     user_id: str = Depends(get_current_user_id),
 ):
     household_id = _get_household_id(user_id, db)
-    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
-    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
+    if household_id:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.household_id == household_id).first()
+    else:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.user_id == user_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     return item
@@ -91,13 +93,16 @@ def create_food_item(
     db: Session = Depends(get_db),
 ):
     household_id = _get_household_id(user_id, db)
-    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
+    if household_id:
+        scope_filter = FoodItem.household_id == household_id
+    else:
+        scope_filter = FoodItem.user_id == user_id
     existing = (
         db.query(FoodItem)
         .filter(
             func.lower(FoodItem.name) == data.name.lower(),
             FoodItem.unit == data.unit,
-            hh_filter,
+            scope_filter,
         )
         .first()
     )
@@ -111,7 +116,7 @@ def create_food_item(
         return existing
 
     item_data = data.model_dump(exclude={"calories_kcal", "protein_g", "carbs_g", "fat_g"})
-    item = FoodItem(**item_data, household_id=household_id)
+    item = FoodItem(**item_data, user_id=user_id, household_id=household_id)
     db.add(item)
     db.flush()
     _sync_nutrition(db, item.id, data)
@@ -128,8 +133,10 @@ def update_food_item(
     user_id: str = Depends(get_current_user_id),
 ):
     household_id = _get_household_id(user_id, db)
-    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
-    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
+    if household_id:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.household_id == household_id).first()
+    else:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.user_id == user_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     update_data = data.model_dump(exclude_unset=True, exclude={"calories_kcal", "protein_g", "carbs_g", "fat_g"})
@@ -148,8 +155,10 @@ def delete_food_item(
     user_id: str = Depends(get_current_user_id),
 ):
     household_id = _get_household_id(user_id, db)
-    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
-    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
+    if household_id:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.household_id == household_id).first()
+    else:
+        item = db.query(FoodItem).filter(FoodItem.id == item_id, FoodItem.user_id == user_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     db.delete(item)

@@ -61,9 +61,9 @@
     "details": "Details",
     "deleteConfirm": "Dieses Lebensmittel löschen?",
     "deleted": "Lebensmittel gelöscht",
-    "reduceQuantity": "Menge reduzieren",
-    "removeAmount": "Entnehmen",
-    "reduce": "Entnehmen",
+    "reduceQuantity": "Verbrauchen",
+    "removeAmount": "Verbrauchte Menge",
+    "reduce": "Verbraucht",
     "quantityReduced": "Menge aktualisiert",
     "expiryShort": "Abl."
   },
