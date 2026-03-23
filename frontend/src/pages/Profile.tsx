@@ -16,7 +16,22 @@ interface HouseholdData {
   name: string;
   invite_code: string;
   members: { user_id: string; name: string | null; email: string | null; role: string }[];
+  share_food_items: boolean;
+  share_grocery_trips: boolean;
+  share_eating_out: boolean;
+  share_subscriptions: boolean;
+  share_recipes: boolean;
+  share_shopping_list: boolean;
 }
+
+const SHARING_KEYS = [
+  { key: 'share_food_items', emoji: '🧊', i18n: 'profile.shareFoodItems' },
+  { key: 'share_grocery_trips', emoji: '🛒', i18n: 'profile.shareGroceryTrips' },
+  { key: 'share_eating_out', emoji: '🍽️', i18n: 'profile.shareEatingOut' },
+  { key: 'share_subscriptions', emoji: '💳', i18n: 'profile.shareSubscriptions' },
+  { key: 'share_recipes', emoji: '📖', i18n: 'profile.shareRecipes' },
+  { key: 'share_shopping_list', emoji: '📝', i18n: 'profile.shareShoppingList' },
+] as const;
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
@@ -92,6 +107,13 @@ export default function Profile() {
     const link = `${window.location.origin}/join?code=${household.invite_code}`;
     navigator.clipboard.writeText(link);
     toast.success(t('profile.linkCopied'));
+  };
+
+  const toggleSharing = async (key: string, value: boolean) => {
+    try {
+      const res = await client.patch('/api/households/settings', { [key]: value });
+      setHousehold(res.data);
+    } catch { toast.error(t('profile.householdError')); }
   };
 
   const inputClass = 'w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors';
@@ -187,6 +209,35 @@ export default function Profile() {
                   )}
                 </div>
               ))}
+            </div>
+
+            {/* Sharing Settings */}
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-700/40">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('profile.sharingSettings')}</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">{t('profile.sharingHint')}</p>
+              <div className="space-y-2">
+                {SHARING_KEYS.map(({ key, emoji, i18n }) => (
+                  <label key={key} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer">
+                    <span className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <span>{emoji}</span>
+                      <span>{t(i18n)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={household[key as keyof HouseholdData] as boolean}
+                      onClick={() => toggleSharing(key, !(household[key as keyof HouseholdData] as boolean))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        household[key as keyof HouseholdData] ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        household[key as keyof HouseholdData] ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <button onClick={leaveHousehold} className="text-xs text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
