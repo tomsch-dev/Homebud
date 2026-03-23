@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.middleware.auth import get_current_user_id
 from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.schemas.grocery import GroceryTripCreate, GroceryTripUpdate, GroceryTripOut
 
@@ -19,21 +20,38 @@ def _apply_items(trip: GroceryTrip, items_data, db: Session):
 
 
 @router.get("/", response_model=List[GroceryTripOut])
-def list_trips(db: Session = Depends(get_db)):
-    return db.query(GroceryTrip).order_by(GroceryTrip.trip_date.desc()).all()
+def list_trips(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    return (
+        db.query(GroceryTrip)
+        .filter(GroceryTrip.user_id == user_id)
+        .order_by(GroceryTrip.trip_date.desc())
+        .all()
+    )
 
 
 @router.get("/{trip_id}", response_model=GroceryTripOut)
-def get_trip(trip_id: uuid.UUID, db: Session = Depends(get_db)):
-    trip = db.get(GroceryTrip, trip_id)
+def get_trip(
+    trip_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    trip = db.query(GroceryTrip).filter(GroceryTrip.id == trip_id, GroceryTrip.user_id == user_id).first()
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     return trip
 
 
 @router.post("/", response_model=GroceryTripOut, status_code=status.HTTP_201_CREATED)
-def create_trip(data: GroceryTripCreate, db: Session = Depends(get_db)):
+def create_trip(
+    data: GroceryTripCreate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
     trip = GroceryTrip(
+        user_id=user_id,
         store_name=data.store_name,
         trip_date=data.trip_date,
         notes=data.notes,
@@ -49,8 +67,13 @@ def create_trip(data: GroceryTripCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{trip_id}", response_model=GroceryTripOut)
-def update_trip(trip_id: uuid.UUID, data: GroceryTripUpdate, db: Session = Depends(get_db)):
-    trip = db.get(GroceryTrip, trip_id)
+def update_trip(
+    trip_id: uuid.UUID,
+    data: GroceryTripUpdate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    trip = db.query(GroceryTrip).filter(GroceryTrip.id == trip_id, GroceryTrip.user_id == user_id).first()
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     for field, value in data.model_dump(exclude_unset=True, exclude={"items"}).items():
@@ -63,8 +86,12 @@ def update_trip(trip_id: uuid.UUID, data: GroceryTripUpdate, db: Session = Depen
 
 
 @router.delete("/{trip_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_trip(trip_id: uuid.UUID, db: Session = Depends(get_db)):
-    trip = db.get(GroceryTrip, trip_id)
+def delete_trip(
+    trip_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    trip = db.query(GroceryTrip).filter(GroceryTrip.id == trip_id, GroceryTrip.user_id == user_id).first()
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     db.delete(trip)

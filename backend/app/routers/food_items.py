@@ -63,8 +63,14 @@ def list_food_items(
 
 
 @router.get("/{item_id}", response_model=FoodItemOut)
-def get_food_item(item_id: uuid.UUID, db: Session = Depends(get_db)):
-    item = db.get(FoodItem, item_id)
+def get_food_item(
+    item_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    household_id = _get_household_id(user_id, db)
+    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
+    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     return item
@@ -107,8 +113,15 @@ def create_food_item(
 
 
 @router.patch("/{item_id}", response_model=FoodItemOut)
-def update_food_item(item_id: uuid.UUID, data: FoodItemUpdate, db: Session = Depends(get_db)):
-    item = db.get(FoodItem, item_id)
+def update_food_item(
+    item_id: uuid.UUID,
+    data: FoodItemUpdate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    household_id = _get_household_id(user_id, db)
+    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
+    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     update_data = data.model_dump(exclude_unset=True, exclude={"calories_kcal", "protein_g", "carbs_g", "fat_g"})
@@ -121,8 +134,14 @@ def update_food_item(item_id: uuid.UUID, data: FoodItemUpdate, db: Session = Dep
 
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_food_item(item_id: uuid.UUID, db: Session = Depends(get_db)):
-    item = db.get(FoodItem, item_id)
+def delete_food_item(
+    item_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    household_id = _get_household_id(user_id, db)
+    hh_filter = FoodItem.household_id == household_id if household_id else FoodItem.household_id.is_(None)
+    item = db.query(FoodItem).filter(FoodItem.id == item_id, hh_filter).first()
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")
     db.delete(item)

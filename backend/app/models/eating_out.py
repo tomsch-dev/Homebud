@@ -12,6 +12,7 @@ class EatingOutExpense(Base):
     __tablename__ = "eating_out_expenses"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
     restaurant_name: Mapped[str] = mapped_column(String(255), nullable=False)
     expense_date: Mapped[date] = mapped_column(Date, nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)

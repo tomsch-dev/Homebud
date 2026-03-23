@@ -2,9 +2,9 @@ from datetime import date, timedelta
 from collections import defaultdict
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.database import get_db
+from app.middleware.auth import get_current_user_id
 from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.models.eating_out import EatingOutExpense
 from app.models.subscription import Subscription
@@ -30,11 +30,16 @@ def spending_summary(
     end: date = Query(..., description="End date (YYYY-MM-DD)"),
     currency: str = Query("EUR"),
     db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
 ):
     # Grocery totals per trip in range
     trips = (
         db.query(GroceryTrip)
-        .filter(GroceryTrip.trip_date >= start, GroceryTrip.trip_date <= end)
+        .filter(
+            GroceryTrip.user_id == user_id,
+            GroceryTrip.trip_date >= start,
+            GroceryTrip.trip_date <= end,
+        )
         .all()
     )
     grocery_total = sum(t.total_amount for t in trips)
@@ -42,7 +47,11 @@ def spending_summary(
     # Eating out in range
     eating = (
         db.query(EatingOutExpense)
-        .filter(EatingOutExpense.expense_date >= start, EatingOutExpense.expense_date <= end)
+        .filter(
+            EatingOutExpense.user_id == user_id,
+            EatingOutExpense.expense_date >= start,
+            EatingOutExpense.expense_date <= end,
+        )
         .all()
     )
     eating_out_total = sum(e.amount for e in eating)
@@ -87,7 +96,11 @@ def spending_summary(
     )[:5]
 
     # Active subscriptions — prorate monthly cost by number of months in range
-    active_subs = db.query(Subscription).filter(Subscription.is_active == True).all()  # noqa: E712
+    active_subs = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id, Subscription.is_active == True)  # noqa: E712
+        .all()
+    )
     months_in_range = max(1, round((end - start).days / 30.44))
     subscription_total = sum(
         sub.amount * CYCLE_MONTHLY_FACTOR.get(sub.billing_cycle, 1.0) * months_in_range

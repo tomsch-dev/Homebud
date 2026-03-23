@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.middleware.auth import get_current_user_id
 from app.models.subscription import Subscription
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate, SubscriptionOut
 
@@ -35,14 +36,26 @@ def _to_out(sub: Subscription) -> SubscriptionOut:
 
 
 @router.get("/", response_model=List[SubscriptionOut])
-def list_subscriptions(db: Session = Depends(get_db)):
-    subs = db.query(Subscription).order_by(Subscription.is_active.desc(), Subscription.name).all()
+def list_subscriptions(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    subs = (
+        db.query(Subscription)
+        .filter(Subscription.user_id == user_id)
+        .order_by(Subscription.is_active.desc(), Subscription.name)
+        .all()
+    )
     return [_to_out(s) for s in subs]
 
 
 @router.post("/", response_model=SubscriptionOut, status_code=status.HTTP_201_CREATED)
-def create_subscription(data: SubscriptionCreate, db: Session = Depends(get_db)):
-    sub = Subscription(**data.model_dump())
+def create_subscription(
+    data: SubscriptionCreate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    sub = Subscription(user_id=user_id, **data.model_dump())
     db.add(sub)
     db.commit()
     db.refresh(sub)
@@ -50,8 +63,13 @@ def create_subscription(data: SubscriptionCreate, db: Session = Depends(get_db))
 
 
 @router.patch("/{sub_id}", response_model=SubscriptionOut)
-def update_subscription(sub_id: uuid.UUID, data: SubscriptionUpdate, db: Session = Depends(get_db)):
-    sub = db.get(Subscription, sub_id)
+def update_subscription(
+    sub_id: uuid.UUID,
+    data: SubscriptionUpdate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    sub = db.query(Subscription).filter(Subscription.id == sub_id, Subscription.user_id == user_id).first()
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
     for field, value in data.model_dump(exclude_unset=True).items():
@@ -62,8 +80,12 @@ def update_subscription(sub_id: uuid.UUID, data: SubscriptionUpdate, db: Session
 
 
 @router.delete("/{sub_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_subscription(sub_id: uuid.UUID, db: Session = Depends(get_db)):
-    sub = db.get(Subscription, sub_id)
+def delete_subscription(
+    sub_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    sub = db.query(Subscription).filter(Subscription.id == sub_id, Subscription.user_id == user_id).first()
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
     db.delete(sub)

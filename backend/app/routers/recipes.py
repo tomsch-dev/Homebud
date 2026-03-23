@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.middleware.auth import get_current_user_id
 from app.models.recipe import Recipe, RecipeIngredient, RecipeStep
 from app.schemas.recipe import RecipeCreate, RecipeUpdate, RecipeOut
 
@@ -22,21 +23,38 @@ def _apply_ingredients_steps(recipe: Recipe, data: RecipeCreate | RecipeUpdate, 
 
 
 @router.get("/", response_model=List[RecipeOut])
-def list_recipes(db: Session = Depends(get_db)):
-    return db.query(Recipe).order_by(Recipe.created_at.desc()).all()
+def list_recipes(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    return (
+        db.query(Recipe)
+        .filter(Recipe.user_id == user_id)
+        .order_by(Recipe.created_at.desc())
+        .all()
+    )
 
 
 @router.get("/{recipe_id}", response_model=RecipeOut)
-def get_recipe(recipe_id: uuid.UUID, db: Session = Depends(get_db)):
-    recipe = db.get(Recipe, recipe_id)
+def get_recipe(
+    recipe_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == user_id).first()
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     return recipe
 
 
 @router.post("/", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)
-def create_recipe(data: RecipeCreate, db: Session = Depends(get_db)):
+def create_recipe(
+    data: RecipeCreate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
     recipe = Recipe(
+        user_id=user_id,
         name=data.name,
         description=data.description,
         servings=data.servings,
@@ -53,8 +71,13 @@ def create_recipe(data: RecipeCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{recipe_id}", response_model=RecipeOut)
-def update_recipe(recipe_id: uuid.UUID, data: RecipeUpdate, db: Session = Depends(get_db)):
-    recipe = db.get(Recipe, recipe_id)
+def update_recipe(
+    recipe_id: uuid.UUID,
+    data: RecipeUpdate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == user_id).first()
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     for field, value in data.model_dump(exclude_unset=True, exclude={"ingredients", "steps"}).items():
@@ -66,8 +89,12 @@ def update_recipe(recipe_id: uuid.UUID, data: RecipeUpdate, db: Session = Depend
 
 
 @router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_recipe(recipe_id: uuid.UUID, db: Session = Depends(get_db)):
-    recipe = db.get(Recipe, recipe_id)
+def delete_recipe(
+    recipe_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == user_id).first()
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     db.delete(recipe)
