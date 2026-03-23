@@ -40,7 +40,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
 
     scanner
       .start(
-        { facingMode: 'environment', advanced: [{ focusMode: 'continuous' } as any] },
+        { facingMode: 'environment' },
         { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;
@@ -50,6 +50,14 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
         },
         () => {},
       )
+      .then(() => {
+        // Try to enable continuous autofocus after camera is running
+        try {
+          const videoEl = el.querySelector('video');
+          const vTrack = (videoEl?.srcObject as MediaStream)?.getVideoTracks()[0];
+          vTrack?.applyConstraints({ advanced: [{ focusMode: 'continuous' } as any] }).catch(() => {});
+        } catch { /* focusMode not supported — ignore */ }
+      })
       .catch(() => {
         setStatus('error');
       });
@@ -101,7 +109,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     });
     scannerRef.current
       .start(
-        { facingMode: 'environment', advanced: [{ focusMode: 'continuous' } as any] },
+        { facingMode: 'environment' },
         { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;
