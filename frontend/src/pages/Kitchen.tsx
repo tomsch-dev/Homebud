@@ -70,6 +70,8 @@ export default function Kitchen() {
     setBarcodePrefill({
       name: product.name,
       category: product.category,
+      quantity: product.quantity || 1,
+      unit: product.quantity_unit || 'pieces',
       calories_kcal: product.calories_kcal,
       protein_g: product.protein_g,
       carbs_g: product.carbs_g,
