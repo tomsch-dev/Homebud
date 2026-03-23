@@ -407,7 +407,8 @@
   },
   "barcode": {
     "title": "Scan Barcode",
-    "hint": "Point your camera at a barcode",
+    "hint": "Point your camera at a barcode. Use zoom for small barcodes.",
+    "alignBarcode": "Align barcode here",
     "cameraError": "Could not access camera. Try entering the barcode manually.",
     "lookingUp": "Looking up product…",
     "notFound": "Product not found in database",

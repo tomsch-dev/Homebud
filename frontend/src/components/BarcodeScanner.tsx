@@ -7,7 +7,6 @@ interface Props {
   onClose: () => void;
 }
 
-// Check for native BarcodeDetector support
 const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
 
 export default function BarcodeScanner({ onResult, onClose }: Props) {
@@ -18,6 +17,10 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
   const [status, setStatus] = useState<'camera' | 'loading' | 'not-found' | 'error'>('camera');
   const [scannedCode, setScannedCode] = useState('');
   const [manualCode, setManualCode] = useState('');
+  const [zoom, setZoom] = useState(1);
+  const [maxZoom, setMaxZoom] = useState(1);
+  const [hasTorch, setHasTorch] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   const stopCamera = useCallback(() => {
     scanningRef.current = false;
@@ -46,19 +49,36 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
   const startCamera = useCallback(async () => {
     setStatus('camera');
     setScannedCode('');
+    setZoom(1);
+    setTorchOn(false);
     scanningRef.current = true;
 
     try {
+      // Request high resolution for better small barcode detection
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
       });
       streamRef.current = stream;
 
-      // Try to enable continuous autofocus
       const vTrack = stream.getVideoTracks()[0];
+      const caps = vTrack.getCapabilities?.() as any;
+
+      // Enable continuous autofocus
       try {
         await vTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' } as any] });
       } catch { /* not supported */ }
+
+      // Check zoom & torch capabilities
+      if (caps?.zoom?.max) {
+        setMaxZoom(Math.min(caps.zoom.max, 8));
+      }
+      if (caps?.torch) {
+        setHasTorch(true);
+      }
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -74,6 +94,29 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       setStatus('error');
     }
   }, []);
+
+  // Apply zoom to the camera track
+  const applyZoom = useCallback((level: number) => {
+    setZoom(level);
+    const vTrack = streamRef.current?.getVideoTracks()[0];
+    if (vTrack) {
+      try {
+        vTrack.applyConstraints({ advanced: [{ zoom: level } as any] });
+      } catch { /* zoom not supported */ }
+    }
+  }, []);
+
+  // Toggle flashlight
+  const toggleTorch = useCallback(() => {
+    const next = !torchOn;
+    setTorchOn(next);
+    const vTrack = streamRef.current?.getVideoTracks()[0];
+    if (vTrack) {
+      try {
+        vTrack.applyConstraints({ advanced: [{ torch: next } as any] });
+      } catch { /* torch not supported */ }
+    }
+  }, [torchOn]);
 
   // Native BarcodeDetector — fast, hardware-accelerated
   const startNativeDetection = useCallback(() => {
@@ -103,7 +146,6 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
       if (!scanningRef.current || !videoRef.current) return;
 
-      // html5-qrcode needs its own container, so we use decodeOnce in a loop
       const formats = [
         Html5QrcodeSupportedFormats.EAN_13,
         Html5QrcodeSupportedFormats.EAN_8,
@@ -114,7 +156,6 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       ];
       const scanner = new Html5Qrcode('barcode-fallback-region', { formatsToSupport: formats, verbose: false });
 
-      // Use the existing stream's video element to capture frames as images
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
 
@@ -126,7 +167,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
         ctx.drawImage(video, 0, 0);
 
         try {
-          const blob: Blob = await new Promise((res) => canvas.toBlob((b) => res(b!), 'image/jpeg', 0.8));
+          const blob: Blob = await new Promise((res) => canvas.toBlob((b) => res(b!), 'image/jpeg', 0.9));
           const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
           const result = await scanner.scanFileV2(file, false);
           if (result && scanningRef.current) {
@@ -136,14 +177,13 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
         } catch { /* no barcode found in this frame */ }
 
         if (scanningRef.current) {
-          setTimeout(scanLoop, 250); // scan ~4 fps for fallback
+          setTimeout(scanLoop, 200);
         }
       };
 
-      // Wait a moment for video to have frames
       setTimeout(scanLoop, 500);
     } catch {
-      // html5-qrcode failed to load — just keep manual entry available
+      // html5-qrcode failed to load
     }
   }, [handleBarcode]);
 
@@ -155,7 +195,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
   const handleManualLookup = () => {
     const code = manualCode.trim();
     if (!code) return;
-    scanningRef.current = true; // allow handleBarcode to proceed
+    scanningRef.current = true;
     handleBarcode(code);
   };
 
@@ -177,18 +217,54 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
           {/* Camera view */}
           {status === 'camera' && (
             <>
-              <div className="relative rounded-xl overflow-hidden bg-black min-h-[250px]">
+              <div className="relative rounded-xl overflow-hidden bg-black min-h-[280px]">
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
                   autoPlay
                   playsInline
                   muted
-                  style={{ minHeight: 250 }}
+                  style={{ minHeight: 280 }}
                 />
                 {/* Scan region overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-[80%] h-[40%] border-2 border-white/60 rounded-lg" />
+                  <div className="w-[80%] h-[35%] border-2 border-white/60 rounded-lg">
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-white/70 text-[11px] font-medium whitespace-nowrap">
+                      {t('barcode.alignBarcode')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Camera controls overlay */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
+                  {/* Torch toggle */}
+                  {hasTorch && (
+                    <button
+                      onClick={toggleTorch}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${torchOn ? 'bg-yellow-400 text-gray-900' : 'bg-black/50 text-white/80 hover:bg-black/70'}`}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* Zoom slider */}
+                  {maxZoom > 1 && (
+                    <div className="flex-1 flex items-center gap-2 bg-black/50 rounded-full px-3 py-1.5">
+                      <span className="text-white/70 text-[10px] font-medium">1x</span>
+                      <input
+                        type="range"
+                        min={1}
+                        max={maxZoom}
+                        step={0.1}
+                        value={zoom}
+                        onChange={(e) => applyZoom(parseFloat(e.target.value))}
+                        className="flex-1 h-1 accent-white appearance-none bg-white/30 rounded-full [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+                      />
+                      <span className="text-white/70 text-[10px] font-medium">{zoom.toFixed(1)}x</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 text-center">{t('barcode.hint')}</p>
