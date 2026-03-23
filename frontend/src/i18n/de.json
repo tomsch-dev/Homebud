@@ -85,7 +85,8 @@
     "calories": "Kalorien (kcal)",
     "protein": "Eiweiß (g)",
     "carbs": "Kohlenhydrate (g)",
-    "fat": "Fett (g)"
+    "fat": "Fett (g)",
+    "howMany": "Wie viele hast du gekauft?"
   },
   "recipes": {
     "title": "Rezepte",
@@ -416,5 +417,14 @@
     "manualEntry": "Oder Barcode manuell eingeben",
     "enterBarcode": "z.B. 4006381333931",
     "lookup": "Suchen"
+  },
+  "shoppingList": {
+    "title": "Einkaufsliste",
+    "addPlaceholder": "Artikel hinzufügen...",
+    "empty": "Deine Einkaufsliste ist leer",
+    "emptyHint": "Füge Artikel hinzu oder wähle aus den Vorschlägen",
+    "checked": "Erledigt",
+    "clearChecked": "Erledigte löschen",
+    "cleared": "Erledigte Artikel gelöscht"
   }
 }

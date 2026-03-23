@@ -32,6 +32,8 @@ export default function FoodItemModal({
     carbs_g: prefill?.carbs_g ?? item?.nutrition?.carbohydrates_total_g ?? undefined,
     fat_g: prefill?.fat_g ?? item?.nutrition?.fat_total_g ?? undefined,
   });
+  const [itemCount, setItemCount] = useState(1);
+  const isBarcodeScan = !!prefill && !item;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [showNutrition, setShowNutrition] = useState(
@@ -44,6 +46,10 @@ export default function FoodItemModal({
     setError('');
     try {
       const submitData = { ...form };
+      // Multiply quantity by item count (e.g. 6 cans of 330ml = 1980ml)
+      if (itemCount > 1) {
+        submitData.quantity = form.quantity * itemCount;
+      }
       // If nutrition section is visible, send explicit values so backend can update/clear
       if (showNutrition) {
         submitData.calories_kcal = form.calories_kcal ?? 0;
@@ -84,6 +90,25 @@ export default function FoodItemModal({
               autoFocus={!item}
             />
           </div>
+
+          {/* Item count (for barcode scans — e.g. "I bought 6 of these") */}
+          {isBarcodeScan && (
+            <div className="bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-3">
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{t('foodModal.howMany')}</label>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => setItemCount(Math.max(1, itemCount - 1))}
+                  className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold transition-colors">−</button>
+                <input type="number" min="1" step="1" value={itemCount}
+                  onChange={(e) => setItemCount(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 text-center border border-gray-200 dark:border-gray-700 rounded-lg py-2 text-base font-semibold bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <button type="button" onClick={() => setItemCount(itemCount + 1)}
+                  className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center text-lg font-bold transition-colors">+</button>
+                <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">
+                  × {form.quantity} {t(`units.${form.unit}`)} = <span className="font-semibold text-gray-700 dark:text-gray-300">{Math.round(form.quantity * itemCount * 100) / 100} {t(`units.${form.unit}`)}</span>
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Quantity + Unit */}
           <div className="grid grid-cols-2 gap-3">

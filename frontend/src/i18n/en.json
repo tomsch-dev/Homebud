@@ -85,7 +85,8 @@
     "calories": "Calories (kcal)",
     "protein": "Protein (g)",
     "carbs": "Carbs (g)",
-    "fat": "Fat (g)"
+    "fat": "Fat (g)",
+    "howMany": "How many did you buy?"
   },
   "recipes": {
     "title": "Recipes",
@@ -416,5 +417,14 @@
     "manualEntry": "Or enter barcode manually",
     "enterBarcode": "e.g. 4006381333931",
     "lookup": "Look up"
+  },
+  "shoppingList": {
+    "title": "Shopping List",
+    "addPlaceholder": "Add an item...",
+    "empty": "Your shopping list is empty",
+    "emptyHint": "Add items or pick from suggestions below",
+    "checked": "Done",
+    "clearChecked": "Clear done",
+    "cleared": "Checked items cleared"
   }
 }

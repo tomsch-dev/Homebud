@@ -6,6 +6,7 @@ from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.models.eating_out import EatingOutExpense
 from app.models.household import Household, HouseholdMember
 from app.models.subscription import Subscription
+from app.models.shopping_list import ShoppingListItem
 
 __all__ = [
     "User", "Role", "UserRole",
@@ -15,4 +16,5 @@ __all__ = [
     "EatingOutExpense",
     "Household", "HouseholdMember",
     "Subscription",
+    "ShoppingListItem",
 ]
