@@ -118,26 +118,56 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     }
   }, [torchOn]);
 
-  // Crop the center scan region from the video for better small-barcode detection.
-  // Returns a canvas containing just the area inside the scan overlay (80% wide, 35% tall).
-  const cropScanRegion = useCallback((): HTMLCanvasElement | null => {
+  // Reusable canvases to avoid GC pressure
+  const cropCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+  const enhCanvasRef = useRef<HTMLCanvasElement>(document.createElement('canvas'));
+
+  // Crop the center scan region, upscale to a fixed width, and enhance contrast.
+  // This makes small barcodes much easier for detectors to read.
+  const cropScanRegion = useCallback((enhanceContrast: boolean = true): HTMLCanvasElement | null => {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return null;
 
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    // Match the overlay dimensions: 80% width, 35% height, centered
+    // Match the overlay: 80% width, 35% height, centered
     const cropW = Math.round(vw * 0.8);
     const cropH = Math.round(vh * 0.35);
     const cropX = Math.round((vw - cropW) / 2);
     const cropY = Math.round((vh - cropH) / 2);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = cropW;
-    canvas.height = cropH;
-    const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-    return canvas;
+    // Upscale to a fixed large width so small barcodes get more pixels
+    const targetW = 2000;
+    const scale = targetW / cropW;
+    const targetH = Math.round(cropH * scale);
+
+    const canvas = cropCanvasRef.current;
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+    // Use high-quality interpolation for upscale
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+    if (!enhanceContrast) return canvas;
+
+    // Enhance contrast: convert to grayscale and apply adaptive threshold
+    // This turns blurry gray bars into crisp black/white
+    const imageData = ctx.getImageData(0, 0, targetW, targetH);
+    const d = imageData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      // Grayscale using luminance weights
+      const gray = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+      // Increase contrast: push values toward black or white
+      const enhanced = gray < 128 ? Math.max(0, gray * 0.5) : Math.min(255, 128 + (gray - 128) * 2);
+      d[i] = d[i + 1] = d[i + 2] = enhanced;
+    }
+    const enhCanvas = enhCanvasRef.current;
+    enhCanvas.width = targetW;
+    enhCanvas.height = targetH;
+    enhCanvas.getContext('2d')!.putImageData(imageData, 0, 0);
+    return enhCanvas;
   }, []);
 
   // Native BarcodeDetector — fast, hardware-accelerated
@@ -146,15 +176,22 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39'],
     });
 
-    let useFullFrame = false; // alternate between cropped and full frame
+    // Cycle: enhanced crop → raw crop → full frame
+    let frameIdx = 0;
 
     const detect = async () => {
       if (!scanningRef.current || !videoRef.current) return;
       try {
-        // Try cropped scan region first (better for small barcodes),
-        // alternate with full frame (catches barcodes outside the overlay)
-        const source = !useFullFrame ? (cropScanRegion() ?? videoRef.current) : videoRef.current;
-        useFullFrame = !useFullFrame;
+        const mode = frameIdx % 3;
+        frameIdx++;
+        let source: any;
+        if (mode === 0) {
+          source = cropScanRegion(true) ?? videoRef.current; // enhanced (contrast-boosted)
+        } else if (mode === 1) {
+          source = cropScanRegion(false) ?? videoRef.current; // raw crop (natural colors)
+        } else {
+          source = videoRef.current; // full frame
+        }
 
         const barcodes = await detector.detect(source);
         if (barcodes.length > 0 && scanningRef.current) {
@@ -185,23 +222,27 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
       ];
       const scanner = new Html5Qrcode('barcode-fallback-region', { formatsToSupport: formats, verbose: false });
 
-      let useFullFrame = false;
+      let frameIdx = 0;
 
       const scanLoop = async () => {
         if (!scanningRef.current || !videoRef.current) return;
 
-        // Alternate between cropped scan region and full frame
-        const canvas = !useFullFrame ? cropScanRegion() : null;
-        useFullFrame = !useFullFrame;
-
-        const src = canvas ?? (() => {
+        const mode = frameIdx % 3;
+        frameIdx++;
+        let src: HTMLCanvasElement;
+        if (mode === 0) {
+          src = cropScanRegion(true) ?? cropScanRegion(false)!;
+        } else if (mode === 1) {
+          src = cropScanRegion(false)!;
+        } else {
           const c = document.createElement('canvas');
           const video = videoRef.current!;
           c.width = video.videoWidth;
           c.height = video.videoHeight;
           c.getContext('2d')!.drawImage(video, 0, 0);
-          return c;
-        })();
+          src = c;
+        }
+        if (!src) return;
 
         try {
           const blob: Blob = await new Promise((res) => src.toBlob((b) => res(b!), 'image/jpeg', 0.9));
