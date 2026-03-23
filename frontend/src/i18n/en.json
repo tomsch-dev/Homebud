@@ -415,6 +415,7 @@
   },
   "barcode": {
     "title": "Scan Barcode",
+    "scan": "Scan",
     "hint": "Point your camera at a barcode. Use zoom for small barcodes.",
     "alignBarcode": "Align barcode here",
     "cameraError": "Could not access camera. Try entering the barcode manually.",

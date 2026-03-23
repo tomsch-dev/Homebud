@@ -415,6 +415,7 @@
   },
   "barcode": {
     "title": "Barcode scannen",
+    "scan": "Scannen",
     "hint": "Halte die Kamera auf einen Barcode. Nutze den Zoom für kleine Barcodes.",
     "alignBarcode": "Barcode hier ausrichten",
     "cameraError": "Kamera nicht verfügbar. Gib den Barcode manuell ein.",

@@ -168,18 +168,19 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
             return (
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('spending.spendingBreakdown')}</p>
-                <div className="h-64">
+                <div className="h-72 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={90}
+                        cy="45%"
+                        innerRadius={45}
+                        outerRadius={80}
                         paddingAngle={3}
                         dataKey="value"
-                        label={({ name, percent }: any) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                        label={({ percent }: any) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                        labelLine={false}
                       >
                         {pieData.map((entry, index) => (
                           <Cell key={index} fill={entry.color} />
