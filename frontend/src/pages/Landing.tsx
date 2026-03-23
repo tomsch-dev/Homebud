@@ -124,7 +124,7 @@ export default function Landing() {
               onClick={toggleLang}
               className="px-2 py-1.5 rounded-lg text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
-              {currentLang === 'de' ? '🇬🇧' : '🇩🇪'}
+              {currentLang === 'de' ? 'EN' : 'DE'}
             </button>
             <button
               onClick={() => signIn(`${window.location.origin}/callback`)}
@@ -178,9 +178,9 @@ export default function Landing() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { label: t('landing.mockItems'), value: '24', emoji: '🗄️', bg: 'bg-emerald-100 dark:bg-emerald-500/20', color: 'text-emerald-600 dark:text-emerald-400' },
-                  { label: t('landing.mockRecipes'), value: '12', emoji: '📖', bg: 'bg-amber-100 dark:bg-amber-500/20', color: 'text-amber-600 dark:text-amber-400' },
+                  { label: t('landing.mockRecipes'), value: '12', emoji: '📖', bg: 'bg-purple-100 dark:bg-purple-500/20', color: 'text-purple-600 dark:text-purple-400' },
                   { label: t('landing.mockBudget'), value: '€340', emoji: '📊', bg: 'bg-blue-100 dark:bg-blue-500/20', color: 'text-blue-600 dark:text-blue-400' },
-                  { label: t('landing.mockSaved'), value: '47%', emoji: '🌱', bg: 'bg-teal-100 dark:bg-teal-500/20', color: 'text-teal-600 dark:text-teal-400' },
+                  { label: t('landing.mockExpiring'), value: '3', emoji: '⏰', bg: 'bg-amber-100 dark:bg-amber-500/20', color: 'text-amber-600 dark:text-amber-400' },
                 ].map((stat) => (
                   <div key={stat.label} className={`${stat.bg} rounded-xl p-3 sm:p-4 text-center`}>
                     <div className="text-xl mb-1">{stat.emoji}</div>
@@ -302,7 +302,10 @@ export default function Landing() {
             </div>
             HomeBud
           </div>
-          <span>&copy; {new Date().getFullYear()}</span>
+          <span>
+            <a href="https://tom-schoenfeld.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline underline-offset-2">tom-schoenfeld.com</a>
+            {' '}&middot; &copy; {new Date().getFullYear()}
+          </span>
         </div>
       </footer>
     </div>
