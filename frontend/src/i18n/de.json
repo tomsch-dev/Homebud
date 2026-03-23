@@ -182,7 +182,10 @@
     "addToKitchen": "Hinzufügen",
     "addedToKitchen": "Lebensmittel zur Küche hinzugefügt",
     "scanHeroTitle": "Kassenbon scannen",
-    "scanHeroDesc": "Fotografiere deinen Kassenbon und alle Artikel werden automatisch erfasst — kein manuelles Eintippen nötig."
+    "scanHeroDesc": "Fotografiere deinen Kassenbon und alle Artikel werden automatisch erfasst — kein manuelles Eintippen nötig.",
+    "totalAmount": "Gesamtbetrag",
+    "itemsOptional": "optional",
+    "quickLog": "Schnelleintrag"
   },
   "eatingOut": {
     "title": "Restaurantbesuche",

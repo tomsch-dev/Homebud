@@ -40,7 +40,8 @@ class GroceryTripCreate(BaseModel):
     trip_date: date
     notes: Optional[str] = None
     currency: str = "EUR"
-    items: List[GroceryTripItemIn]
+    items: List[GroceryTripItemIn] = []
+    total_override: Optional[float] = None
 
 
 class GroceryTripUpdate(BaseModel):

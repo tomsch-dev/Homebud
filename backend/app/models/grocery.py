@@ -16,6 +16,7 @@ class GroceryTrip(Base):
     trip_date: Mapped[date] = mapped_column(Date, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text)
     currency: Mapped[str] = mapped_column(String(10), default="EUR")
+    total_override: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     items: Mapped[List["GroceryTripItem"]] = relationship(
@@ -24,6 +25,8 @@ class GroceryTrip(Base):
 
     @property
     def total_amount(self) -> float:
+        if self.total_override is not None and not self.items:
+            return self.total_override
         return sum(item.total_price for item in self.items)
 
 

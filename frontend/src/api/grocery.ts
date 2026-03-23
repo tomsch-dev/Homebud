@@ -41,6 +41,7 @@ export interface CreateGroceryTrip {
   notes?: string;
   currency?: string;
   items: CreateGroceryTripItem[];
+  total_override?: number;
 }
 
 export const groceryApi = {

@@ -182,7 +182,10 @@
     "addToKitchen": "Add",
     "addedToKitchen": "Items added to kitchen",
     "scanHeroTitle": "Scan Your Receipt",
-    "scanHeroDesc": "Snap a photo of your grocery receipt and we'll extract all items automatically — no manual entry needed."
+    "scanHeroDesc": "Snap a photo of your grocery receipt and we'll extract all items automatically — no manual entry needed.",
+    "totalAmount": "Total Amount",
+    "itemsOptional": "optional",
+    "quickLog": "Quick log"
   },
   "eatingOut": {
     "title": "Eating Out",

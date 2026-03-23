@@ -38,6 +38,8 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
   const [items, setItems] = useState<CreateGroceryTripItem[]>([
     { name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency },
   ]);
+  const [showItems, setShowItems] = useState(false);
+  const [totalOverride, setTotalOverride] = useState('');
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [scanning, setScanning] = useState(false);
@@ -71,23 +73,33 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
     e.preventDefault();
     setSaving(true);
     try {
-      const data: CreateGroceryTrip = { ...form, items };
+      const hasItems = showItems && items.some((it) => it.name.trim());
+      const validItems = hasItems ? items.filter((it) => it.name.trim()) : [];
+      const data: CreateGroceryTrip = {
+        ...form,
+        items: validItems,
+        total_override: !hasItems && totalOverride ? parseFloat(totalOverride) : undefined,
+      };
       await groceryApi.create(data);
-      const addToKitchen = await toast.confirm(t('grocery.addToKitchenConfirm'), { confirmLabel: t('grocery.addToKitchen'), confirmColor: 'emerald' });
-      if (addToKitchen) {
-        for (const item of items) {
-          try {
-            await foodItemsApi.create({
-              name: item.name, quantity: item.quantity, unit: item.unit,
-              category: item.category || undefined, price_per_unit: item.price_per_unit, price_currency: form.currency,
-            } as CreateFoodItem);
-          } catch { /* skip */ }
+      if (hasItems) {
+        const addToKitchen = await toast.confirm(t('grocery.addToKitchenConfirm'), { confirmLabel: t('grocery.addToKitchen'), confirmColor: 'emerald' });
+        if (addToKitchen) {
+          for (const item of validItems) {
+            try {
+              await foodItemsApi.create({
+                name: item.name, quantity: item.quantity, unit: item.unit,
+                category: item.category || undefined, price_per_unit: item.price_per_unit, price_currency: form.currency,
+              } as CreateFoodItem);
+            } catch { /* skip */ }
+          }
+          toast.success(t('grocery.addedToKitchen'));
         }
-        toast.success(t('grocery.addedToKitchen'));
       }
       setShowForm(false);
       setForm({ store_name: '', trip_date: '', notes: '', currency: userCurrency });
       setItems([{ name: '', quantity: 1, unit: 'pieces', price_per_unit: 0, discount: 0, currency: userCurrency }]);
+      setShowItems(false);
+      setTotalOverride('');
       dismissScan();
       load();
     } catch {
@@ -124,6 +136,7 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
           category: item.category || undefined,
         }))
       );
+      setShowItems(true);
       setShowForm(true);
       toast.success(t('grocery.scanSuccess'));
     } catch {
@@ -248,13 +261,32 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                 className={inputCls} />
             </div>
 
-            {/* Items */}
+            {/* Total amount (shown when no itemized list) */}
+            {!showItems && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('grocery.totalAmount')} ({form.currency}) *</label>
+                <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" required={!showItems} value={totalOverride}
+                  onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setTotalOverride(v); }}
+                  className={inputCls} placeholder="0.00" />
+              </div>
+            )}
+
+            {/* Items toggle + section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('common.items')} *</label>
-                <button type="button" onClick={addItem} className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium py-1">{t('grocery.addItem')}</button>
+                <button type="button" onClick={() => setShowItems(!showItems)}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <svg className={`w-4 h-4 transition-transform ${showItems ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                  {t('common.items')} <span className="text-xs text-gray-400 dark:text-gray-500 font-normal">({t('grocery.itemsOptional')})</span>
+                </button>
+                {showItems && (
+                  <button type="button" onClick={addItem} className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium py-1">{t('grocery.addItem')}</button>
+                )}
               </div>
 
+              {showItems && <>
               {/* Desktop table */}
               <div className="hidden sm:block space-y-2">
                 <div className="grid grid-cols-12 gap-1 text-xs text-gray-400 dark:text-gray-500 font-medium px-1">
@@ -276,7 +308,7 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                       </select>
                     </div>
                     <div className="col-span-3">
-                      <input type="text" required value={it.name} placeholder="Name"
+                      <input type="text" value={it.name} placeholder="Name"
                         onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
                         className={`w-full ${inputClsSm}`} />
                     </div>
@@ -325,7 +357,7 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                       <option value="">{t('grocery.fromKitchen')}...</option>
                       {foodItems.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
-                    <input type="text" required value={it.name} placeholder={t('grocery.name')}
+                    <input type="text" value={it.name} placeholder={t('grocery.name')}
                       onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))}
                       className={inputCls} />
                     <div className="grid grid-cols-3 gap-2">
@@ -371,6 +403,7 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                   {fmtCurrency(items.reduce((s, it) => s + it.quantity * it.price_per_unit - (it.discount || 0), 0), form.currency)}
                 </span>
               </p>
+              </>}
             </div>
 
             <div className="flex gap-3">
@@ -412,7 +445,9 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                     <h3 className="font-semibold text-gray-900 dark:text-white truncate">{trip.store_name}</h3>
                     <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{fmtDate(trip.trip_date, i18n.language)}</span>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{trip.items.length} {t('common.items')}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    {trip.items.length > 0 ? `${trip.items.length} ${t('common.items')}` : t('grocery.quickLog')}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="font-semibold text-emerald-700 dark:text-emerald-400 text-base sm:text-lg">

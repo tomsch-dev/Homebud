@@ -38,6 +38,7 @@ def create_trip(data: GroceryTripCreate, db: Session = Depends(get_db)):
         trip_date=data.trip_date,
         notes=data.notes,
         currency=data.currency,
+        total_override=data.total_override,
     )
     db.add(trip)
     db.flush()

@@ -32,10 +32,15 @@ function mapCategory(tags: string[]): string | undefined {
 }
 
 export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProduct | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
   try {
     const res = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,quantity,categories_tags,nutriments,image_front_small_url`,
+      { signal: controller.signal },
     );
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
     if (data.status !== 1 || !data.product) return null;
@@ -54,6 +59,7 @@ export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProdu
       image_url: p.image_front_small_url ?? undefined,
     };
   } catch {
+    clearTimeout(timeout);
     return null;
   }
 }
