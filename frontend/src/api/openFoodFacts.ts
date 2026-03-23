@@ -52,10 +52,10 @@ export async function lookupBarcode(barcode: string): Promise<OpenFoodFactsProdu
       name: p.product_name || '',
       quantity_str: p.quantity || undefined,
       category: mapCategory(p.categories_tags || []),
-      calories_kcal: n['energy-kcal_100g'] ?? undefined,
-      protein_g: n.proteins_100g ?? undefined,
-      carbs_g: n.carbohydrates_100g ?? undefined,
-      fat_g: n.fat_100g ?? undefined,
+      calories_kcal: n['energy-kcal_100g'] != null ? Math.round(n['energy-kcal_100g'] * 10) / 10 : undefined,
+      protein_g: n.proteins_100g != null ? Math.round(n.proteins_100g * 10) / 10 : undefined,
+      carbs_g: n.carbohydrates_100g != null ? Math.round(n.carbohydrates_100g * 10) / 10 : undefined,
+      fat_g: n.fat_100g != null ? Math.round(n.fat_100g * 10) / 10 : undefined,
       image_url: p.image_front_small_url ?? undefined,
     };
   } catch {
