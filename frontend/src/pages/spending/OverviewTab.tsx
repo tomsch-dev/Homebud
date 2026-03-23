@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { spendingApi, SpendingSummary } from '../../api/spending';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { fmtCurrency, fmtDate } from '../../utils/currency';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -159,21 +159,42 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
             </div>
           </div>
 
-          {summary.total > 0 && (
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('spending.spendingBreakdown')}</p>
-              <div className="flex rounded-full overflow-hidden h-5">
-                {groceryPct > 0 && <div className="bg-emerald-400 dark:bg-emerald-500 transition-all" style={{ width: `${groceryPct}%` }} />}
-                {eatingPct > 0 && <div className="bg-orange-400 dark:bg-orange-500 transition-all" style={{ width: `${eatingPct}%` }} />}
-                {subPct > 0 && <div className="bg-violet-400 dark:bg-violet-500 transition-all" style={{ width: `${subPct}%` }} />}
+          {summary.total > 0 && (() => {
+            const pieData = [
+              { name: t('spending.groceries'), value: summary.grocery_total, color: '#34d399' },
+              { name: t('spending.eatingOut'), value: summary.eating_out_total, color: '#fb923c' },
+              { name: t('subscriptions.title'), value: summary.subscription_total, color: '#a78bfa' },
+            ].filter(d => d.value > 0);
+            return (
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('spending.spendingBreakdown')}</p>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, percent }: any) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip currencyCode={summary.currency} />} />
+                      <Legend
+                        formatter={(value: string) => <span className="text-xs text-gray-600 dark:text-gray-400">{value}</span>}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-400 dark:bg-emerald-500 rounded-full inline-block" /> {t('spending.groceries')} {groceryPct}%</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-400 dark:bg-orange-500 rounded-full inline-block" /> {t('spending.eatingOut')} {eatingPct}%</span>
-                {subPct > 0 && <span className="flex items-center gap-1"><span className="w-3 h-3 bg-violet-400 dark:bg-violet-500 rounded-full inline-block" /> {t('subscriptions.title')} {subPct}%</span>}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Weekly bar chart */}
           {summary.weekly_breakdown.length > 0 && (

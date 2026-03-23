@@ -126,13 +126,13 @@ export default function Dashboard() {
             <span className="text-base">📷</span>
             {t('dashboard.scanBarcode')}
           </Link>
-          <Link
-            to="/shopping-list"
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-shopping-list'))}
             className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
           >
             <span className="text-base">📝</span>
             {t('dashboard.shoppingList')}
-          </Link>
+          </button>
           <Link
             to="/kitchen"
             className="flex items-center gap-2 px-3.5 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl hover:shadow-md transition-shadow active:scale-[0.97] whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"

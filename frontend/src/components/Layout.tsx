@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import { useUser } from '../hooks/useUser';
@@ -9,6 +9,13 @@ export default function Layout() {
   const { user, loading } = useUser();
   const location = useLocation();
   const [showShoppingList, setShowShoppingList] = useState(false);
+
+  // Listen for open-shopping-list events from other components
+  useEffect(() => {
+    const handler = () => setShowShoppingList(true);
+    window.addEventListener('open-shopping-list', handler);
+    return () => window.removeEventListener('open-shopping-list', handler);
+  }, []);
 
   // Redirect to profile if name not set (but allow /profile and /join pages)
   const nameExemptPaths = ['/profile', '/join'];
