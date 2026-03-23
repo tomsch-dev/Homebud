@@ -40,7 +40,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
 
     scanner
       .start(
-        { facingMode: 'environment' },
+        { facingMode: 'environment', advanced: [{ focusMode: 'continuous' } as any] },
         { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;
@@ -101,7 +101,7 @@ export default function BarcodeScanner({ onResult, onClose }: Props) {
     });
     scannerRef.current
       .start(
-        { facingMode: 'environment' },
+        { facingMode: 'environment', advanced: [{ focusMode: 'continuous' } as any] },
         { fps: 15, qrbox: qrboxFn, aspectRatio: 1.333 },
         (decodedText) => {
           if (stoppedRef.current) return;

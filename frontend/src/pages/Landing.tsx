@@ -34,46 +34,60 @@ function FadeIn({ children, className = '', delay = '' }: { children: React.Reac
 
 const features = [
   {
-    icon: 'M4 7h16M4 7V5a1 1 0 011-1h14a1 1 0 011 1v2M4 7l1 12a2 2 0 002 2h10a2 2 0 002-2l1-12',
+    emoji: '🗄️',
     titleKey: 'landing.featureKitchen',
     descKey: 'landing.featureKitchenDesc',
     color: 'from-emerald-500 to-teal-500',
     bg: 'bg-emerald-50 dark:bg-emerald-500/10',
   },
   {
-    icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
-    titleKey: 'landing.featureRecipes',
-    descKey: 'landing.featureRecipesDesc',
-    color: 'from-amber-500 to-orange-500',
-    bg: 'bg-amber-50 dark:bg-amber-500/10',
-  },
-  {
-    icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
-    titleKey: 'landing.featureAI',
-    descKey: 'landing.featureAIDesc',
-    color: 'from-purple-500 to-violet-500',
-    bg: 'bg-purple-50 dark:bg-purple-500/10',
-  },
-  {
-    icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z',
-    titleKey: 'landing.featureGrocery',
-    descKey: 'landing.featureGroceryDesc',
-    color: 'from-blue-500 to-cyan-500',
-    bg: 'bg-blue-50 dark:bg-blue-500/10',
-  },
-  {
-    icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z',
+    emoji: '📷',
     titleKey: 'landing.featureScan',
     descKey: 'landing.featureScanDesc',
     color: 'from-rose-500 to-pink-500',
     bg: 'bg-rose-50 dark:bg-rose-500/10',
   },
   {
-    icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    emoji: '🤖',
+    titleKey: 'landing.featureAI',
+    descKey: 'landing.featureAIDesc',
+    color: 'from-purple-500 to-violet-500',
+    bg: 'bg-purple-50 dark:bg-purple-500/10',
+  },
+  {
+    emoji: '🛒',
+    titleKey: 'landing.featureGrocery',
+    descKey: 'landing.featureGroceryDesc',
+    color: 'from-blue-500 to-cyan-500',
+    bg: 'bg-blue-50 dark:bg-blue-500/10',
+  },
+  {
+    emoji: '🍽️',
+    titleKey: 'landing.featureEatingOut',
+    descKey: 'landing.featureEatingOutDesc',
+    color: 'from-orange-500 to-amber-500',
+    bg: 'bg-orange-50 dark:bg-orange-500/10',
+  },
+  {
+    emoji: '🔄',
+    titleKey: 'landing.featureSubscriptions',
+    descKey: 'landing.featureSubscriptionsDesc',
+    color: 'from-indigo-500 to-blue-500',
+    bg: 'bg-indigo-50 dark:bg-indigo-500/10',
+  },
+  {
+    emoji: '📊',
     titleKey: 'landing.featureSpending',
     descKey: 'landing.featureSpendingDesc',
     color: 'from-teal-500 to-emerald-500',
     bg: 'bg-teal-50 dark:bg-teal-500/10',
+  },
+  {
+    emoji: '📖',
+    titleKey: 'landing.featureRecipes',
+    descKey: 'landing.featureRecipesDesc',
+    color: 'from-amber-500 to-orange-500',
+    bg: 'bg-amber-50 dark:bg-amber-500/10',
   },
 ];
 
@@ -110,7 +124,7 @@ export default function Landing() {
               onClick={toggleLang}
               className="px-2 py-1.5 rounded-lg text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
-              {currentLang === 'de' ? 'EN' : 'DE'}
+              {currentLang === 'de' ? '🇬🇧' : '🇩🇪'}
             </button>
             <button
               onClick={() => signIn(`${window.location.origin}/callback`)}
@@ -154,31 +168,44 @@ export default function Landing() {
         </div>
         </FadeIn>
 
-        {/* Hero image */}
+        {/* Hero preview — app tabs */}
         <FadeIn>
         <div className="mt-12 sm:mt-16 relative max-w-4xl mx-auto">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 rounded-2xl blur-3xl -z-10" />
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-2xl shadow-emerald-500/10 overflow-hidden p-1">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 sm:p-8">
-              {/* Mock dashboard preview */}
+              {/* Mock stat cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  { label: t('landing.mockItems'), value: '24', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20' },
-                  { label: t('landing.mockExpiring'), value: '3', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-500/20' },
-                  { label: t('landing.mockRecipes'), value: '12', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-500/20' },
-                  { label: t('landing.mockSaved'), value: '47%', color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-100 dark:bg-teal-500/20' },
+                  { label: t('landing.mockItems'), value: '24', emoji: '🗄️', bg: 'bg-emerald-100 dark:bg-emerald-500/20', color: 'text-emerald-600 dark:text-emerald-400' },
+                  { label: t('landing.mockRecipes'), value: '12', emoji: '📖', bg: 'bg-amber-100 dark:bg-amber-500/20', color: 'text-amber-600 dark:text-amber-400' },
+                  { label: t('landing.mockBudget'), value: '€340', emoji: '📊', bg: 'bg-blue-100 dark:bg-blue-500/20', color: 'text-blue-600 dark:text-blue-400' },
+                  { label: t('landing.mockSaved'), value: '47%', emoji: '🌱', bg: 'bg-teal-100 dark:bg-teal-500/20', color: 'text-teal-600 dark:text-teal-400' },
                 ].map((stat) => (
                   <div key={stat.label} className={`${stat.bg} rounded-xl p-3 sm:p-4 text-center`}>
+                    <div className="text-xl mb-1">{stat.emoji}</div>
                     <div className={`text-2xl sm:text-3xl font-bold ${stat.color}`}>{stat.value}</div>
                     <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{stat.label}</div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-gray-200/60 dark:border-gray-700/60">
-                    <div className="w-full h-2 bg-emerald-200 dark:bg-emerald-500/30 rounded-full mb-2" />
-                    <div className="w-2/3 h-2 bg-gray-200 dark:bg-gray-700 rounded-full" />
+              {/* Mock nav tabs */}
+              <div className="mt-4 flex gap-2 sm:gap-3 overflow-x-auto">
+                {[
+                  { label: t('landing.mockTabKitchen'), emoji: '🏠', active: true },
+                  { label: t('landing.mockTabRecipes'), emoji: '📖', active: false },
+                  { label: t('landing.mockTabSpending'), emoji: '💰', active: false },
+                ].map((tab) => (
+                  <div
+                    key={tab.label}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap ${
+                      tab.active
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200/60 dark:border-gray-700/60'
+                    }`}
+                  >
+                    <span>{tab.emoji}</span>
+                    <span>{tab.label}</span>
                   </div>
                 ))}
               </div>
@@ -199,24 +226,44 @@ export default function Landing() {
         </p>
         </FadeIn>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {features.map((f, i) => (
-            <FadeIn key={f.titleKey} delay={`delay-[${i * 100}ms]`}>
+            <FadeIn key={f.titleKey} delay={`delay-[${i * 75}ms]`}>
             <div
-              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all h-full"
+              className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all h-full"
             >
-              <div className={`w-10 h-10 ${f.bg} rounded-lg flex items-center justify-center mb-4`}>
-                <svg className={`w-5 h-5 text-transparent bg-clip-text`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <defs>
-                    <linearGradient id={`grad-${f.titleKey}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" className={f.color.split(' ')[0].replace('from-', 'text-')} />
-                    </linearGradient>
-                  </defs>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} className={`${f.color.includes('emerald') ? 'stroke-emerald-500' : f.color.includes('amber') ? 'stroke-amber-500' : f.color.includes('purple') ? 'stroke-purple-500' : f.color.includes('blue') ? 'stroke-blue-500' : f.color.includes('rose') ? 'stroke-rose-500' : 'stroke-teal-500'}`} />
-                </svg>
+              <div className={`w-10 h-10 ${f.bg} rounded-lg flex items-center justify-center mb-3 text-xl`}>
+                {f.emoji}
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1.5">{t(f.titleKey)}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{t(f.descKey)}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-1.5 text-sm">{t(f.titleKey)}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(f.descKey)}</p>
+            </div>
+            </FadeIn>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <FadeIn>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white text-center mb-10 sm:mb-14">
+          {t('landing.howItWorksTitle')}
+        </h2>
+        </FadeIn>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 max-w-3xl mx-auto">
+          {[
+            { step: '1', emoji: '📱', titleKey: 'landing.step1Title', descKey: 'landing.step1Desc' },
+            { step: '2', emoji: '📷', titleKey: 'landing.step2Title', descKey: 'landing.step2Desc' },
+            { step: '3', emoji: '🤖', titleKey: 'landing.step3Title', descKey: 'landing.step3Desc' },
+          ].map((s, i) => (
+            <FadeIn key={s.step} delay={`delay-[${i * 150}ms]`}>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl relative">
+                {s.emoji}
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-600 text-white text-xs font-bold rounded-full flex items-center justify-center">{s.step}</span>
+              </div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-1.5">{t(s.titleKey)}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{t(s.descKey)}</p>
             </div>
             </FadeIn>
           ))}

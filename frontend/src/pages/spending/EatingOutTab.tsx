@@ -194,8 +194,8 @@ export default function EatingOutTab({ userCurrency, inputCls }: Props) {
               </div>
               <div className="min-w-0">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('eatingOut.amount')} ({currencySymbol(userCurrency)}) *</label>
-                <input type="number" required min="0" step="0.01" value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) })}
+                <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" required value={form.amount || ''}
+                  onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setForm({ ...form, amount: parseFloat(v) || 0 }); }}
                   className={inputCls} />
               </div>
             </div>

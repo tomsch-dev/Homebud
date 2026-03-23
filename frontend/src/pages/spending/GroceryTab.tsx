@@ -281,8 +281,8 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                         className={`w-full ${inputClsSm}`} />
                     </div>
                     <div className="col-span-1">
-                      <input type="number" min="0" step="0.001" value={it.quantity}
-                        onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, quantity: parseFloat(e.target.value) } : x))}
+                      <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.quantity || ''}
+                        onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, quantity: parseFloat(v) || 0 } : x)); }}
                         className={`w-full ${inputClsSm}`} />
                     </div>
                     <div className="col-span-2">
@@ -291,13 +291,13 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                       </select>
                     </div>
                     <div className="col-span-1">
-                      <input type="number" min="0" step="0.01" value={it.price_per_unit}
-                        onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, price_per_unit: parseFloat(e.target.value) } : x))}
+                      <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.price_per_unit || ''}
+                        onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, price_per_unit: parseFloat(v) || 0 } : x)); }}
                         className={`w-full ${inputClsSm}`} placeholder="0.00" />
                     </div>
                     <div className="col-span-1">
-                      <input type="number" min="0" step="0.01" value={it.discount || 0}
-                        onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, discount: parseFloat(e.target.value) || 0 } : x))}
+                      <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.discount || ''}
+                        onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, discount: parseFloat(v) || 0 } : x)); }}
                         className={`w-full ${inputClsSm} ${(it.discount || 0) > 0 ? 'text-red-500' : ''}`} placeholder="0" />
                     </div>
                     <div className="col-span-1">
@@ -331,8 +331,8 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <label className="block text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">{t('grocery.qty')}</label>
-                        <input type="number" min="0" step="0.001" value={it.quantity}
-                          onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, quantity: parseFloat(e.target.value) } : x))}
+                        <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.quantity || ''}
+                          onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, quantity: parseFloat(v) || 0 } : x)); }}
                           className={inputCls} />
                       </div>
                       <div>
@@ -343,16 +343,16 @@ export default function GroceryTab({ userCurrency, inputCls, inputClsSm }: Props
                       </div>
                       <div>
                         <label className="block text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">{t('grocery.price')}</label>
-                        <input type="number" min="0" step="0.01" value={it.price_per_unit}
-                          onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, price_per_unit: parseFloat(e.target.value) } : x))}
+                        <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.price_per_unit || ''}
+                          onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, price_per_unit: parseFloat(v) || 0 } : x)); }}
                           className={inputCls} placeholder="0.00" />
                       </div>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1">
                         <label className="block text-[10px] text-gray-400 dark:text-gray-500 mb-0.5">{t('grocery.discount')}</label>
-                        <input type="number" min="0" step="0.01" value={it.discount || 0}
-                          onChange={(e) => setItems(items.map((x, idx) => idx === i ? { ...x, discount: parseFloat(e.target.value) || 0 } : x))}
+                        <input type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={it.discount || ''}
+                          onChange={(e) => { const v = e.target.value.replace(',', '.'); if (v === '' || /^\d*\.?\d*$/.test(v)) setItems(items.map((x, idx) => idx === i ? { ...x, discount: parseFloat(v) || 0 } : x)); }}
                           className={`${inputCls} ${(it.discount || 0) > 0 ? 'text-red-500' : ''}`} placeholder="0" />
                       </div>
                       <div className="text-right pt-3">
