@@ -112,8 +112,8 @@ def spending_summary(
         for sub in active_subs
     )
 
-    # Income in range
-    income_user_ids = get_visible_user_ids(user_id, "share_subscriptions", db)
+    # Income in range (income is always personal, no household sharing)
+    income_user_ids = [user_id]
     income_entries = (
         db.query(Income)
         .filter(Income.user_id.in_(income_user_ids), Income.income_date >= start, Income.income_date <= end)
