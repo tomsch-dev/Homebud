@@ -8,6 +8,7 @@ from app.middleware.auth import get_current_user_id
 from app.models.grocery import GroceryTrip, GroceryTripItem
 from app.models.eating_out import EatingOutExpense
 from app.models.subscription import Subscription
+from app.models.income import Income
 from app.schemas.spending import SpendingSummary, WeeklyBreakdown
 from app.utils.household import get_visible_user_ids
 
@@ -111,12 +112,22 @@ def spending_summary(
         for sub in active_subs
     )
 
+    # Income in range
+    income_user_ids = get_visible_user_ids(user_id, "share_subscriptions", db)
+    income_entries = (
+        db.query(Income)
+        .filter(Income.user_id.in_(income_user_ids), Income.income_date >= start, Income.income_date <= end)
+        .all()
+    )
+    income_total = sum(i.amount for i in income_entries)
+
     return SpendingSummary(
         period_start=start,
         period_end=end,
         grocery_total=round(grocery_total, 2),
         eating_out_total=round(eating_out_total, 2),
         subscription_total=round(subscription_total, 2),
+        income_total=round(income_total, 2),
         total=round(grocery_total + eating_out_total + subscription_total, 2),
         currency=currency,
         weekly_breakdown=weekly_breakdown,

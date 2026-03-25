@@ -30,6 +30,7 @@ class HouseholdOut(BaseModel):
     share_subscriptions: bool = False
     share_recipes: bool = False
     share_shopping_list: bool = True
+    share_calendar: bool = True
     model_config = {"from_attributes": True}
 
 
@@ -44,3 +45,4 @@ class HouseholdSettingsUpdate(BaseModel):
     share_subscriptions: Optional[bool] = None
     share_recipes: Optional[bool] = None
     share_shopping_list: Optional[bool] = None
+    share_calendar: Optional[bool] = None

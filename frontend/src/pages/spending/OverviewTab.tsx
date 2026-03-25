@@ -137,6 +137,31 @@ export default function OverviewTab({ userCurrency, inputCls }: Props) {
       {summary && (
         <div className="space-y-4 sm:space-y-6">
           {/* Summary cards */}
+          {/* Income & Balance */}
+          {(summary.income_total > 0 || summary.total > 0) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4 sm:p-5">
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">{t('spending.income')}</p>
+                <p className="text-2xl font-bold text-emerald-800 dark:text-emerald-300 mt-1">+{fmtCurrency(summary.income_total, summary.currency)}</p>
+              </div>
+              <div className={`rounded-xl p-4 sm:p-5 border ${
+                summary.income_total - summary.total >= 0
+                  ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+                  : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20'
+              }`}>
+                <p className={`text-xs ${summary.income_total - summary.total >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                  {t('spending.balance')}
+                </p>
+                <p className={`text-2xl font-bold mt-1 ${summary.income_total - summary.total >= 0 ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
+                  {fmtCurrency(summary.income_total - summary.total, summary.currency)}
+                </p>
+                <p className={`text-[10px] mt-0.5 ${summary.income_total - summary.total >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {summary.income_total - summary.total >= 0 ? t('spending.netPositive') : t('spending.netNegative')}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 sm:overflow-visible snap-x snap-mandatory">
             <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 min-w-[140px] flex-shrink-0 sm:flex-shrink sm:min-w-0 snap-start">
               <p className="text-xs text-gray-500 dark:text-gray-400">{t('spending.totalSpending')}</p>

@@ -36,6 +36,7 @@ def _household_to_out(h: Household) -> HouseholdOut:
         share_subscriptions=h.share_subscriptions,
         share_recipes=h.share_recipes,
         share_shopping_list=h.share_shopping_list,
+        share_calendar=h.share_calendar,
     )
 
 

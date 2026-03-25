@@ -22,6 +22,7 @@ class Household(Base):
     share_subscriptions: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     share_recipes: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     share_shopping_list: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    share_calendar: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
     members: Mapped[List["HouseholdMember"]] = relationship("HouseholdMember", back_populates="household", cascade="all, delete-orphan")
 

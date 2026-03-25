@@ -22,6 +22,7 @@ interface HouseholdData {
   share_subscriptions: boolean;
   share_recipes: boolean;
   share_shopping_list: boolean;
+  share_calendar: boolean;
 }
 
 const SHARING_KEYS = [
@@ -31,6 +32,7 @@ const SHARING_KEYS = [
   { key: 'share_subscriptions', emoji: '💳', i18n: 'profile.shareSubscriptions' },
   { key: 'share_recipes', emoji: '📖', i18n: 'profile.shareRecipes' },
   { key: 'share_shopping_list', emoji: '📝', i18n: 'profile.shareShoppingList' },
+  { key: 'share_calendar', emoji: '📅', i18n: 'profile.shareCalendar' },
 ] as const;
 
 export default function Profile() {

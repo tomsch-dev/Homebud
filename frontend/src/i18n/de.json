@@ -8,7 +8,8 @@
     "signOut": "Abmelden",
     "more": "Mehr",
     "admin": "Admin",
-    "profile": "Profil"
+    "profile": "Profil",
+    "calendar": "Kalender"
   },
   "common": {
     "cancel": "Abbrechen",
@@ -239,7 +240,11 @@
     "weeklyBreakdown": "Wochenübersicht",
     "topStores": "Top Geschäfte",
     "topRestaurants": "Top Restaurants",
-    "failedToLoad": "Ausgabendaten konnten nicht geladen werden."
+    "failedToLoad": "Ausgabendaten konnten nicht geladen werden.",
+    "income": "Einkommen",
+    "balance": "Bilanz",
+    "netPositive": "Du bist im Plus!",
+    "netNegative": "Ausgaben übersteigen Einkommen"
   },
   "nutrition": {
     "title": "Nährwerte",
@@ -358,6 +363,7 @@
     "shareSubscriptions": "Abonnements",
     "shareRecipes": "Rezepte",
     "shareShoppingList": "Einkaufsliste",
+    "shareCalendar": "Kalender",
     "joinedHousehold": "Erfolgreich dem Haushalt beigetreten!",
     "redirecting": "Weiterleitung...",
     "goToProfile": "Zum Profil",
@@ -447,5 +453,39 @@
     "checked": "Erledigt",
     "clearChecked": "Erledigte löschen",
     "cleared": "Erledigte Artikel gelöscht"
+  },
+  "income": {
+    "title": "Einkommen",
+    "addIncome": "Einkommen hinzufügen",
+    "editIncome": "Einkommen bearbeiten",
+    "source": "Quelle",
+    "amount": "Betrag",
+    "date": "Datum",
+    "recurring": "Wiederkehrend",
+    "frequency": "Häufigkeit",
+    "weekly": "Wöchentlich",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "noIncome": "Noch keine Einkommenseinträge",
+    "deleted": "Einkommen gelöscht",
+    "saved": "Einkommen gespeichert",
+    "notes": "Notizen",
+    "notesPlaceholder": "Optionale Notizen...",
+    "totalIncome": "Gesamteinkommen"
+  },
+  "calendar": {
+    "title": "Kalender",
+    "today": "Heute",
+    "addEvent": "Termin hinzufügen",
+    "editEvent": "Termin bearbeiten",
+    "noEvents": "Keine Termine an diesem Tag",
+    "allDay": "Ganztägig",
+    "startTime": "Beginn",
+    "endTime": "Ende",
+    "eventTitle": "Titel",
+    "description": "Beschreibung",
+    "color": "Farbe",
+    "deleted": "Termin gelöscht",
+    "saved": "Termin gespeichert"
   }
 }

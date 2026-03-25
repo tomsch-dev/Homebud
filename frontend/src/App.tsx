@@ -16,6 +16,7 @@ const Spending = lazy(() => import('./pages/Spending'));
 const AdminConsole = lazy(() => import('./pages/AdminConsole'));
 const Profile = lazy(() => import('./pages/Profile'));
 const JoinHousehold = lazy(() => import('./pages/JoinHousehold'));
+const CalendarPage = lazy(() => import('./pages/Calendar'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -44,6 +45,7 @@ export default function App() {
               <Route path="/recipes" element={<Recipes />} />
               <Route path="/recipes/:id" element={<RecipeDetail />} />
               <Route path="/spending" element={<Spending />} />
+              <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/admin" element={<AdminConsole />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/join" element={<JoinHousehold />} />

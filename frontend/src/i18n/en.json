@@ -8,7 +8,8 @@
     "signOut": "Sign Out",
     "more": "More",
     "admin": "Admin",
-    "profile": "Profile"
+    "profile": "Profile",
+    "calendar": "Calendar"
   },
   "common": {
     "cancel": "Cancel",
@@ -239,7 +240,11 @@
     "weeklyBreakdown": "Weekly Breakdown",
     "topStores": "Top Stores",
     "topRestaurants": "Top Restaurants",
-    "failedToLoad": "Failed to load spending data."
+    "failedToLoad": "Failed to load spending data.",
+    "income": "Income",
+    "balance": "Balance",
+    "netPositive": "You're in the green!",
+    "netNegative": "Spending exceeds income"
   },
   "nutrition": {
     "title": "Nutrition Facts",
@@ -358,6 +363,7 @@
     "shareSubscriptions": "Subscriptions",
     "shareRecipes": "Recipes",
     "shareShoppingList": "Shopping List",
+    "shareCalendar": "Calendar",
     "joinedHousehold": "Successfully joined household!",
     "redirecting": "Redirecting...",
     "goToProfile": "Go to Profile",
@@ -447,5 +453,39 @@
     "checked": "Done",
     "clearChecked": "Clear done",
     "cleared": "Checked items cleared"
+  },
+  "income": {
+    "title": "Income",
+    "addIncome": "Add Income",
+    "editIncome": "Edit Income",
+    "source": "Source",
+    "amount": "Amount",
+    "date": "Date",
+    "recurring": "Recurring",
+    "frequency": "Frequency",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "noIncome": "No income entries yet",
+    "deleted": "Income deleted",
+    "saved": "Income saved",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes...",
+    "totalIncome": "Total Income"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "addEvent": "Add Event",
+    "editEvent": "Edit Event",
+    "noEvents": "No events on this day",
+    "allDay": "All day",
+    "startTime": "Start",
+    "endTime": "End",
+    "eventTitle": "Title",
+    "description": "Description",
+    "color": "Color",
+    "deleted": "Event deleted",
+    "saved": "Event saved"
   }
 }

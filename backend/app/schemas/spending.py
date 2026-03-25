@@ -18,6 +18,7 @@ class SpendingSummary(BaseModel):
     grocery_total: float
     eating_out_total: float
     subscription_total: float = 0.0
+    income_total: float = 0.0
     total: float
     currency: str
     weekly_breakdown: List[WeeklyBreakdown]
