@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUser } from '../hooks/useUser';
 import OverviewTab from './spending/OverviewTab';
-import GroceryTab from './spending/GroceryTab';
-import EatingOutTab from './spending/EatingOutTab';
-import SubscriptionsTab from './spending/SubscriptionsTab';
+import ExpensesTab from './spending/ExpensesTab';
 import IncomeTab from './spending/IncomeTab';
 
-type Tab = 'overview' | 'grocery' | 'eating-out' | 'subscriptions' | 'income';
+type Tab = 'overview' | 'expenses' | 'income';
 
 export default function Spending() {
   const { t } = useTranslation();
@@ -19,7 +17,7 @@ export default function Spending() {
   const inputClsSm = 'w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-2 text-sm sm:text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white dark:focus:bg-gray-700 min-h-[40px]';
 
   const tabCls = (active: boolean) =>
-    `flex-1 py-2.5 px-2 sm:px-3 text-xs sm:text-sm font-medium rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center gap-1.5 whitespace-nowrap ${
+    `flex-1 py-2.5 px-4 text-sm font-medium rounded-lg transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
       active
         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -32,44 +30,30 @@ export default function Spending() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('spending.subtitle')}</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-1 overflow-x-auto scrollbar-hide">
+      {/* 3 clean tabs */}
+      <div className="flex gap-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-1">
         <button onClick={() => setTab('overview')} className={tabCls(tab === 'overview')}>
           <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span className="hidden sm:inline">{t('spending.overview')}</span>
+          <span>{t('spending.overview')}</span>
         </button>
-        <button onClick={() => setTab('grocery')} className={tabCls(tab === 'grocery')}>
+        <button onClick={() => setTab('expenses')} className={tabCls(tab === 'expenses')}>
           <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
           </svg>
-          <span className="hidden sm:inline">{t('spending.groceries')}</span>
-        </button>
-        <button onClick={() => setTab('eating-out')} className={tabCls(tab === 'eating-out')}>
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-          </svg>
-          <span className="hidden sm:inline">{t('spending.eatingOut')}</span>
-        </button>
-        <button onClick={() => setTab('subscriptions')} className={tabCls(tab === 'subscriptions')}>
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span className="hidden sm:inline">{t('subscriptions.title')}</span>
+          <span>{t('spending.expenses')}</span>
         </button>
         <button onClick={() => setTab('income')} className={tabCls(tab === 'income')}>
           <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="hidden sm:inline">{t('income.title')}</span>
+          <span>{t('spending.income')}</span>
         </button>
       </div>
 
       {tab === 'overview' && <OverviewTab userCurrency={userCurrency} inputCls={inputCls} />}
-      {tab === 'grocery' && <GroceryTab userCurrency={userCurrency} inputCls={inputCls} inputClsSm={inputClsSm} />}
-      {tab === 'eating-out' && <EatingOutTab userCurrency={userCurrency} inputCls={inputCls} />}
-      {tab === 'subscriptions' && <SubscriptionsTab userCurrency={userCurrency} inputCls={inputCls} />}
+      {tab === 'expenses' && <ExpensesTab userCurrency={userCurrency} inputCls={inputCls} inputClsSm={inputClsSm} />}
       {tab === 'income' && <IncomeTab userCurrency={userCurrency} inputCls={inputCls} />}
     </div>
   );

@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast';
 import { fmtCurrency, currencySymbol, fmtDate } from '../../utils/currency';
 
 const BILLING_CYCLES = ['monthly', 'yearly', 'weekly', 'quarterly'];
-const SUB_CATEGORIES = ['streaming', 'music', 'software', 'fitness', 'cloud', 'insurance', 'other'];
+const SUB_CATEGORIES = ['rent', 'utilities', 'insurance', 'streaming', 'music', 'software', 'fitness', 'cloud', 'phone', 'transport', 'alimony', 'other'];
 
 interface Props {
   userCurrency: string;
